@@ -306,7 +306,7 @@ def read_candidate2score(candidates_file, src_text_file, trg_text_file, src_id_f
 def bucc_eval(candidates_file, gold_file, src_file, trg_file, src_id_file, trg_id_file, predict_file, threshold=None, encoding='utf-8'):
   candidate2score = read_candidate2score(candidates_file, src_file, trg_file, src_id_file, trg_id_file, encoding)
 
-  if threshold is not None and gold_file is None:
+  if (threshold is not None) and (gold_file is None):
     print(' - using threshold {}'.format(threshold))
   else:
     print(' - optimizing threshold on gold alignments {}'.format(gold_file))
@@ -339,3 +339,41 @@ def similarity_search(x, y, dim, normalize=False):
   idx.add(x)
   scores, prediction = idx.search(y, 1)
   return prediction
+
+
+def extract_ids_and_sentences(original_file, ids_file, sentences_file, encoding='utf-8'):
+  with open(original_file, encoding=encoding, errors='surrogateescape') as f:
+    originals = [l.strip() for l in f]
+  
+  fids = open(ids_file, mode='w', encoding=encoding, errors='surrogateescape')
+  fsent = open(sentences_file, mode='w', encoding=encoding, errors='surrogateescape')
+
+  for orig in originals:
+    sep_orig = orig.split("\t")
+    print(sep_orig[0], file=fids)
+    print(sep_orig[1], file=fsent)
+
+# x = np.random.normal(0, 1, (40354, 32)).astype(np.float32)
+# x_file = "/home/slivajan/PRO/bucc2018-de-en.sample-gold/bucc2018/de-en/de-en.sample.en"
+# x_file_id = "/home/slivajan/PRO/bucc2018-de-en.sample-gold/bucc2018/de-en/de-en.sample.en.id"
+# x_file_sent = "/home/slivajan/PRO/bucc2018-de-en.sample-gold/bucc2018/de-en/de-en.sample.en.sent"
+
+# extract_ids_and_sentences(x_file, x_file_id, x_file_sent)
+
+# y = np.random.normal(0, 1, (32593, 32)).astype(np.float32)
+# y_file = "/home/slivajan/PRO/bucc2018-de-en.sample-gold/bucc2018/de-en/de-en.sample.de"
+# y_file_id = "/home/slivajan/PRO/bucc2018-de-en.sample-gold/bucc2018/de-en/de-en.sample.de.id"
+# y_file_sent = "/home/slivajan/PRO/bucc2018-de-en.sample-gold/bucc2018/de-en/de-en.sample.de.sent"
+
+# extract_ids_and_sentences(y_file, y_file_id, y_file_sent)
+
+# output_file = "/home/slivajan/PRO/bucc2018-de-en.sample-gold/bucc2018/de-en/test"
+
+# mine_bitext(x, y, x_file_id, y_file_id, output_file, threshold=-100)
+
+# gold_file = "/home/slivajan/PRO/bucc2018-de-en.sample-gold/bucc2018/de-en/de-en.sample.gold"
+
+# vystup = bucc_eval(output_file, gold_file, x_file_sent, y_file_sent, x_file_id, y_file_id, None)
+  
+# print(vystup)
+

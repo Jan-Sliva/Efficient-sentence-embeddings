@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# mofified
+# modified
 """Evaluate pretrained or fine-tuned models on retrieval tasks."""
 
 import argparse
@@ -36,13 +36,11 @@ from tqdm import tqdm, trange
 
 from transformers import (
     BertConfig, BertModel, BertTokenizer, XLMConfig, XLMModel,
-    XLMRobertaTokenizer, XLMTokenizer)
+    RobertaTokenizer, XLMTokenizer)
 
 from bert import BertForRetrieval
-from processors.utils import InputFeatures
+from utils import InputFeatures
 from utils_retrieve import mine_bitext, bucc_eval, similarity_search
-import utils_lareqa
-import utils_mewslix
 from xlm_roberta import XLMRobertaConfig, XLMRobertaForRetrieval, XLMRobertaModel
 
 
@@ -57,10 +55,10 @@ ALL_MODELS = sum(
 MODEL_CLASSES = {
     "bert": (BertConfig, BertModel, BertTokenizer),
     "xlm": (XLMConfig, XLMModel, XLMTokenizer),
-    "xlmr": (XLMRobertaConfig, XLMRobertaModel, XLMRobertaTokenizer),
+    "xlmr": (XLMRobertaConfig, XLMRobertaModel, RobertaTokenizer),
     "bert-retrieval": (BertConfig, BertForRetrieval, BertTokenizer),
     "xlmr-retrieval":
-        (XLMRobertaConfig, XLMRobertaForRetrieval, XLMRobertaTokenizer),
+        (XLMRobertaConfig, XLMRobertaForRetrieval, RobertaTokenizer),
 }
 
 
@@ -248,7 +246,6 @@ def cls_pool_embedding(all_layer_outputs):
     sent_embeds.append(embeds)
   return sent_embeds
 
-
 def concate_embedding(all_embeds, last_k):
   if last_k == 1:
     return all_embeds[-1]
@@ -265,7 +262,7 @@ def main():
   parser.add_argument('--tgt_file', default=None, help='tgt file')
   parser.add_argument('--gold', default=None,
     help='File name of gold alignments')
-  parser.add_argument('--threshold', type=float, default=-1,
+  parser.add_argument('--threshold', type=float, default=None,
     help='Threshold (used with --output)')
   parser.add_argument('--embed_size', type=int, default=768,
     help='Dimensions of output embeddings')
@@ -300,8 +297,8 @@ def main():
     type=str,
     help="Path to pre-trained model or shortcut name selected in the list"
   )
-  parser.add_argument("--src_language", type=str, default="en", help="source language.")
-  parser.add_argument("--tgt_language", type=str, default="de", help="target language.")
+  parser.add_argument("--src_language", type=str, default="de", help="source language.")
+  parser.add_argument("--tgt_language", type=str, default="en", help="target language.")
   parser.add_argument("--batch_size", type=int, default=100, help="batch size.")
   parser.add_argument("--tgt_text_file", type=str, default=None, help="tgt_text_file.")
   parser.add_argument("--src_text_file", type=str, default=None, help="src_text_file.")
@@ -417,11 +414,11 @@ def main():
   if args.task_name == 'bucc2018':
     best_threshold = None
     SL, TL = args.src_language, args.tgt_language
-    for split in ['dev', 'test']:
+    for split in ['training']:
       prefix = os.path.join(args.output_dir, f'{SL}-{TL}.{split}')
       if args.extract_embeds:
         for lang in [SL, TL]:
-          extract_embeddings(args, f'{prefix}.{lang}.txt', f'{prefix}.{lang}.tok', f'{prefix}.{lang}.emb', lang=lang, pool_type=args.pool_type)
+          extract_embeddings(args, f'{prefix}.{lang}', f'{prefix}.{lang}.tok', f'{prefix}.{lang}.emb', lang=lang, pool_type=args.pool_type)
 
       if args.mine_bitext:
         num_layers = args.num_layers
@@ -442,7 +439,7 @@ def main():
           gold_file = f'{prefix}.gold'
           if os.path.exists(gold_file):
             predict_file = os.path.join(args.predict_dir, f'test-{SL}.tsv')
-            results = bucc_eval(cand2score_file, gold_file, f'{prefix}.{SL}.txt', f'{prefix}.{TL}.txt', f'{prefix}.{SL}.id', f'{prefix}.id', predict_file, threshold)
+            results = bucc_eval(cand2score_file, gold_file, f'{prefix}.{SL}.txt', f'{prefix}.{TL}.txt', f'{prefix}.{SL}.id', f'{prefix}.id', predict_file, args.threshold)
             best_threshold = results['best-threshold']
             logger.info('--Candidates: {}'.format(cand2score_file))
             logger.info('index={} '.format(suf) + ' '.join('{}={:.4f}'.format(k,v) for k,v in results.items()))
