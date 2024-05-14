@@ -4,8 +4,9 @@ from transformers import BertModel, BertTokenizerFast
 class Labse:
 
     def __init__(self) -> None:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
         self.tokenizer = BertTokenizerFast.from_pretrained("setu4993/LaBSE")
-        self.model = BertModel.from_pretrained("setu4993/LaBSE")
+        self.model = BertModel.from_pretrained("setu4993/LaBSE").to(device)
         self.model = self.model.eval()
 
     def predict_transformer(self, sentences, batch_size):
@@ -16,9 +17,9 @@ class Labse:
 
         for s in range(0, len(sentences), batch_size):
             e = min(s+batch_size, len(sentences))
-            inputs_batch = inputs.copy()
-            for key in inputs_batch.keys():
-                inputs_batch[key] = inputs_batch[key][s:e]
+            inputs_batch = {}
+            for key in inputs.keys():
+                inputs_batch[key] = inputs[key][s:e]
             with torch.no_grad():
                 ret[s:e] = self.model(**inputs_batch).pooler_output
 
