@@ -36,6 +36,9 @@ def pair_retrieval_eval(x, y, x_file, y_file, gold_file, output_file, predict_fi
 def BUCC_eval(input_folder, output_folder, extract_emb_f, save_embs=True):
     vystupy = {}
 
+    if not P.exists(output_folder):
+        os.mkdir(output_folder)
+
     for pair in BUCC_pairs:
         x_lang = pair.split("-")[0]
         y_lang = pair.split("-")[1]
@@ -49,8 +52,12 @@ def BUCC_eval(input_folder, output_folder, extract_emb_f, save_embs=True):
         x_list = extract_file_as_list(x_file, mode="bucc")
         y_list = extract_file_as_list(y_file, mode="bucc")
 
-        emb_x_file = P.join(output_folder, pair, "{}.emb".format(x_lang))
-        emb_y_file = P.join(output_folder, pair, "{}.emb".format(y_lang))
+        pair_output_dir = P.join(output_folder, pair)
+        if not P.exists(pair_output_dir):
+            os.mkdir(pair_output_dir)
+        
+        emb_x_file = P.join(pair_output_dir, "{}.emb".format(x_lang))
+        emb_y_file = P.join(pair_output_dir, "{}.emb".format(y_lang))
 
         x = extract_emb_f(x_list)
         y = extract_emb_f(y_list)

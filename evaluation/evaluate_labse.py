@@ -4,11 +4,12 @@ from evaluate_BUCC import BUCC_eval
 import argparse
 
 def main():
-  args = argparse.ArgumentParser(description='LaBse evaluation')
-  args.add_argument("--batch_size", type=int, default=100, help="batch size.")
-  args.add_argument("--BUCC_folder", type=str)
-  args.add_argument("--word_emb_eval_folder", type=str)
-  args.add_argument("--LaBSE_eval_folder", type=str)
+  parser = argparse.ArgumentParser(description='LaBse evaluation')
+  parser.add_argument("--batch_size", type=int, default=100, help="batch size.")
+  parser.add_argument("--BUCC_folder", type=str, default="")
+  parser.add_argument("--word_emb_eval_folder", type=str)
+  parser.add_argument("--LaBSE_eval_folder", type=str)
+  args = parser.parse_args()
 
   model = Labse()
 
