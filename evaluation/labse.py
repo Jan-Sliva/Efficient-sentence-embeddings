@@ -32,6 +32,7 @@ class Labse:
         emb_dim = self.model.embeddings.word_embeddings.embedding_dim
 
         fast_emb = torch.zeros((len(sentences), emb_dim))
+        inputs["input_ids"] = inputs["input_ids"].to(self.device)
 
         for s in range(0, len(sentences), batch_size):
             e = min(s+batch_size, len(sentences))
