@@ -23,7 +23,7 @@ class Labse:
             with torch.no_grad():
                 ret[s:e] = self.model(**inputs_batch).pooler_output
 
-        return ret.detach().numpy()
+        return ret.cpu().detach().numpy()
 
 
     def predict_word_emb(self, sentences, batch_size):
@@ -48,7 +48,7 @@ class Labse:
 
             del fast_emb_sent
 
-        return fast_emb.detach().numpy()
+        return fast_emb.cpu().detach().numpy()
     
 if __name__ == "__main__":
     model = Labse()
