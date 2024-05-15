@@ -35,11 +35,13 @@ class Labse:
         inputs["input_ids"] = inputs["input_ids"].to(self.device)
 
         for s in range(0, len(sentences), batch_size):
+            print(f"batch no. {s//batch_size}/{(len(sentences)//batch_size) + 1}")
             e = min(s+batch_size, len(sentences))
-            fast_emb_sent = self.model.embeddings.word_embeddings(inputs["input_ids"][s:e])
+            with torch.no_grad():
+                fast_emb_sent = self.model.embeddings.word_embeddings(inputs["input_ids"][s:e])
 
             for i in range(fast_emb_sent.shape[0]):
-                fast_emb[s+i] = torch.zeros((emb_dim,))
+                fast_emb[s+i] = 0
                 j = 1
                 while inputs["input_ids"][s+i, j] != 102: # 102 = SEP token
                     fast_emb[s+i] += fast_emb_sent[i, j]

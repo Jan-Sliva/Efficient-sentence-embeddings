@@ -10,7 +10,7 @@ BUCC_pairs = ["zh-en", "ru-en", "fr-en", "de-en"]
 
 
 
-def pair_retrieval_eval(x, y, x_file, y_file, gold_file, output_file, predict_file=None):
+def pair_retrieval_eval(x, y, x_file, y_file, gold_file, output_file, predict_file=None, use_gpu=False):
     x_file_id = x_file + ".id"
     x_file_sent = x_file + ".sent"
 
@@ -21,7 +21,7 @@ def pair_retrieval_eval(x, y, x_file, y_file, gold_file, output_file, predict_fi
 
     extract_ids_and_sentences(y_file, y_file_id, y_file_sent)
 
-    mine_bitext(x, y, x_file_id, y_file_id, output_file)
+    mine_bitext(x, y, x_file_id, y_file_id, output_file, use_gpu=use_gpu)
 
     vystup = bucc_eval(output_file, gold_file, x_file_sent, y_file_sent, x_file_id, y_file_id, predict_file)
 
@@ -33,7 +33,7 @@ def pair_retrieval_eval(x, y, x_file, y_file, gold_file, output_file, predict_fi
     return vystup
 
 
-def BUCC_eval(input_folder, output_folder, extract_emb_f, save_embs=True):
+def BUCC_eval(input_folder, output_folder, extract_emb_f, save_embs=True, use_gpu=False):
     vystupy = {}
 
     if not P.exists(output_folder):
@@ -66,7 +66,7 @@ def BUCC_eval(input_folder, output_folder, extract_emb_f, save_embs=True):
             np.save(emb_x_file, x)
             np.save(emb_y_file, y)
 
-        vystup = pair_retrieval_eval(x, y, x_file, y_file, gold_file, output_file, predict_file)
+        vystup = pair_retrieval_eval(x, y, x_file, y_file, gold_file, output_file, predict_file, use_gpu=use_gpu)
         vystupy[pair] = vystup
 
     return vystupy
