@@ -284,8 +284,8 @@ def read_sent2id(text_file, id_file, encoding='utf-8'):
 
 def read_candidate2score(candidates_file, src_text_file, trg_text_file, src_id_file, trg_id_file, encoding='utf-8'):
   print(' - reading sentences {}'.format(candidates_file))
-  src_sent2id = read_sent2id(src_text_file, src_id_file, encoding)
-  trg_sent2id = read_sent2id(trg_text_file, trg_id_file, encoding)
+  src_id2sent = read_sent2id(src_id_file, src_text_file, encoding)
+  trg_id2sent = read_sent2id(trg_id_file, trg_text_file, encoding)
 
   print(' - reading candidates {}'.format(candidates_file))
   candidate2score = {}
@@ -295,11 +295,9 @@ def read_candidate2score(candidates_file, src_text_file, trg_text_file, src_id_f
       score = float(score)
       src = src.strip()
       trg = trg.strip()
-      if src in src_sent2id and trg in trg_sent2id:
-        src_id = src_sent2id[src]
-        trg_id = trg_sent2id[trg]
-        score = max(score, candidate2score.get((src_id, trg_id), score))
-        candidate2score[(src_id, trg_id)] = score
+      if src in src_id2sent and trg in trg_id2sent:
+        score = max(score, candidate2score.get((src, trg), score))
+        candidate2score[(src, trg)] = score
   return candidate2score
 
 
@@ -344,6 +342,12 @@ def similarity_search(x, y, dim, normalize=False):
 def extract_ids_and_sentences(original_file, ids_file, sentences_file, encoding='utf-8'):
   with open(original_file, encoding=encoding, errors='surrogateescape') as f:
     originals = [l.strip() for l in f]
+
+  if os.path.exists(sentences_file):
+    os.remove(sentences_file)
+
+  if os.path.exists(ids_file):
+    os.remove(ids_file) 
   
   fids = open(ids_file, mode='w', encoding=encoding, errors='surrogateescape')
   fsent = open(sentences_file, mode='w', encoding=encoding, errors='surrogateescape')

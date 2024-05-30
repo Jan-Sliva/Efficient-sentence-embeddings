@@ -13,13 +13,13 @@ def main():
   parser.add_argument("--use_gpu", type=bool, default=True)
   args = parser.parse_args()
 
-  labse = Labse()
-  word_emb = WordEmb()
 
   if (args.word_emb_eval_folder != None):
+    word_emb = WordEmb()
     print(BUCC_eval(args.BUCC_folder, args.word_emb_eval_folder, lambda x: word_emb.predict(x, args.batch_size, False), use_gpu=args.use_gpu))
   
   if (args.labse_eval_folder != None):
+    labse = Labse()
     print(BUCC_eval(args.BUCC_folder, args.labse_eval_folder, lambda x: labse.predict(x, args.batch_size, True), use_gpu=args.use_gpu))
 
 
