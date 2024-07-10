@@ -1,6 +1,8 @@
 import numpy as np
 import os
 
+import time
+
 from utils_retrieve import bucc_eval, extract_ids_and_sentences, mine_bitext, extract_file_as_list
 import os.path as P
 
@@ -55,8 +57,10 @@ def BUCC_eval(input_folder, output_folder, extract_emb_f, save_embs=False, use_g
         if not P.exists(pair_output_dir):
             os.mkdir(pair_output_dir)
         
+        start = time.time()
         x = extract_emb_f(x_list)
         y = extract_emb_f(y_list)
+        end = time.time()
 
         if save_embs:
             emb_x_file = P.join(pair_output_dir, "{}.emb".format(x_lang))
@@ -65,7 +69,9 @@ def BUCC_eval(input_folder, output_folder, extract_emb_f, save_embs=False, use_g
             np.save(emb_y_file, y)
 
         vystup = pair_retrieval_eval(x, y, x_file, y_file, gold_file, output_file, predict_file, use_gpu=use_gpu)
-        vystupy[pair] = vystup
+        vystupy[pair] = {}
+        vystupy[pair]["result"] = vystup
+        vystupy[pair]["time"] = end-start
 
     return vystupy
 
