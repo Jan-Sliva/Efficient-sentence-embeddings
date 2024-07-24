@@ -357,17 +357,14 @@ def extract_ids_and_sentences(original_file, ids_file, sentences_file, encoding=
     print(sep_orig[0], file=fids)
     print(sep_orig[1], file=fsent)
 
-def extract_file_as_list(file, mode = "flores", encoding='utf-8'):
+def extract_file_as_list_bucc(file, encoding='utf-8'):
   with open(file, encoding=encoding, errors='surrogateescape') as f:
     orig = [l.strip() for l in f]
 
-  if mode == "flores":
-    return orig
-  elif mode == "bucc":
-    ret = []
+  ret = []
 
-    for sent in orig:
-      ret.append(sent.split("\t")[1])
+  for sent in orig:
+    ret.append(sent.split("\t")[1])
 
-    return ret
+  return ret
 
