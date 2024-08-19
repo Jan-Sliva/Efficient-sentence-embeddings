@@ -1,13 +1,27 @@
 from fairseq.models.lightconv import LightConvEncoder
-from torch.nn import Embedding
-import numpy as np
+import os.path as P
+import os
+from utils import *
+import train_model
 
-embs = Embedding(np.load("BERT-embedings"))
+folder = "/lnet/aic/personal/slivajan/PRO/19_08"
+data_folder = "/lnet/aic/personal/slivajan/PRO/training"
+emb_path = "/lnet/aic/personal/slivajan/PRO/Labse-embs.pt"
+dict = {"layers" : 1, "kernel_sizes" : [31], "conv_type" : "lightweight", "weight_softmax" : True}
+lr = 0.0005
+batch_size = 128
+epochs = 1
 
-encoder = LightConvEncoder(get_args(), None, embs)
 
+embs = load_embs(emb_path)
+args = get_args(**dict)
 
+light_encoder = LightConvEncoder(args, None, embs).to("cuda")
 
+create_folder(data_folder)
+save_folder = P.join(folder, "save")
+create_folder(save_folder)
+tb_folder = P.join(folder, "tb")
+create_folder(tb_folder)
 
-def get_args():
-    pass
+train_model.train(light_encoder, data_folder, save_folder, tb_folder, lr, batch_size, epochs)
