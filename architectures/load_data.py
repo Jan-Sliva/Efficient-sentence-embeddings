@@ -18,8 +18,6 @@ class DestillationDataset(Dataset):
         self.tokens = []
         self.tokens_starts = []
 
-        self.langs = ["cs"] # remove
-
         for l in self.langs:
             self.embs.append(DestillationDataset.load_npy_as_mmap(P.join(self.emb_folder, l + ".npy")))
             self.tokens.append(DestillationDataset.load_npy_as_mmap(P.join(self.token_folder, l + ".npy")))

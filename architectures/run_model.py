@@ -4,7 +4,7 @@ import os
 from utils import *
 import train_model
 
-folder = "/lnet/aic/personal/slivajan/PRO/19_08"
+folder = "/lnet/aic/personal/slivajan/PRO/20_08"
 data_folder = "/lnet/aic/personal/slivajan/PRO/training"
 emb_path = "/lnet/aic/personal/slivajan/PRO/Labse-embs.pt"
 dict = {"layers" : 1, "kernel_sizes" : [31], "conv_type" : "lightweight", "weight_softmax" : True}
@@ -18,6 +18,7 @@ args = get_args(**dict)
 
 light_encoder = LightConvEncoder(args, None, embs).to("cuda")
 
+create_folder(folder)
 create_folder(data_folder)
 save_folder = P.join(folder, "save")
 create_folder(save_folder)

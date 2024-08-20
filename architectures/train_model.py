@@ -18,7 +18,9 @@ def train_one_epoch(model, loader, optimizer, loss_fn, epoch_index, tb_writer, r
         optimizer.zero_grad()
 
         # Make predictions for this batch
-        outputs = model(inputs)["encoder_out"]
+        outputs = model(inputs)["encoder_out"][0]
+        outputs = outputs.mean(dim=0)
+        outputs = torch.nn.functional.normalize(outputs, p=2, dim=1)
 
         # Compute the loss and its gradients
         loss = loss_fn(outputs, labels)
@@ -31,7 +33,7 @@ def train_one_epoch(model, loader, optimizer, loss_fn, epoch_index, tb_writer, r
         running_loss += loss.item()
         if i % report_each == (report_each-1):
             last_loss = running_loss / report_each # loss per batch
-            print('  batch {} loss: {}'.format(i + 1, last_loss))
+            print('  batch {} loss: {}'.format(i + 1, last_loss), flush=True)
             tb_x = epoch_index * len(loader) + i + 1
             tb_writer.add_scalar('Loss/train', last_loss, tb_x)
             running_loss = 0.
@@ -51,8 +53,6 @@ def train(model, data_folder, save_folder, tb_folder, lr, batch_size, epochs=1):
         output = [ torch.Tensor(t[1]).to("cuda", dtype=torch.float32) for t in batch ]
         output = torch.stack(output, dim=0)
 
-        print(input.shape)
-        print(output.shape)
         return input, output
 
     loader = torch.utils.data.DataLoader(DestillationDataset(P.join(data_folder, "tokens"), P.join(data_folder, "labse_embs")),
@@ -63,6 +63,6 @@ def train(model, data_folder, save_folder, tb_folder, lr, batch_size, epochs=1):
     model.train()
 
     for e in range(epochs):
-        print("Epoch {}".format(e))
+        print("Epoch {}".format(e), flush=True)
         train_one_epoch(model, loader, optimizer, loss_fn, e, writer)
         torch.save(model.state_dict(), P.join(save_folder, "model-{}.pt".format(e+1)))
