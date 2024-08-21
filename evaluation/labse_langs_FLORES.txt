@@ -44,7 +44,6 @@ kaz_Cyrl
 khm_Khmr
 kan_Knda
 kor_Hang
-ckb_Arab
 kmr_Latn
 kir_Cyrl
 ltz_Latn
