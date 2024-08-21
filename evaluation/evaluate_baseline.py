@@ -1,7 +1,7 @@
-from labse import Labse
-from word_emb import WordEmb
-from evaluate_BUCC import BUCC_eval
-from evaluate_FLORES import FLORES_eval
+from evaluation.labse import Labse
+from evaluation.word_emb import WordEmb
+from evaluation.evaluate_BUCC import BUCC_eval
+from evaluation.evaluate_FLORES import FLORES_eval
 
 import os.path as P
 import os

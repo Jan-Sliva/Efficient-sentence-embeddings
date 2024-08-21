@@ -3,7 +3,7 @@ import os
 
 import time
 
-from utils_retrieve import bucc_eval, extract_ids_and_sentences, mine_bitext, extract_file_as_list_bucc
+from evaluation.utils_retrieve import bucc_eval, extract_ids_and_sentences, mine_bitext, extract_file_as_list_bucc
 import os.path as P
 
 # BUCC - F1

@@ -2,14 +2,11 @@ import numpy as np
 import os
 import time
 
-import word_emb
-import labse
-
 import faiss
 
 import os.path as P
 
-from utils_retrieve import knn
+from evaluation.utils_retrieve import knn
 
 # FLORES - accuracy
 # gold labels are (0, 0), (1, 1), ... (i, i), ...
