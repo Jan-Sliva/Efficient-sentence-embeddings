@@ -25,7 +25,7 @@ def accuracy_eval(x: np.array, y: np.array, use_gpu):
         
     return no_correct/N
 
-def FLORES_eval(input_folder, output_folder, extract_emb_f, use_gpu=True):
+def FLORES_eval(input_folder, output_folder, extract_emb_f, name_of_model, use_gpu=True):
 
     if not P.exists(output_folder):
         os.mkdir(output_folder)
@@ -57,32 +57,47 @@ def FLORES_eval(input_folder, output_folder, extract_emb_f, use_gpu=True):
         times.append(end-start)
 
         
-    f_times = P.join(output_folder, "time.csv")
+    f_times = P.join(output_folder, "{}-FLORES-time.csv".format(name_of_model))
     with open(f_times, "w") as f:
         f.write("language,time\n")
         for i in range(len(languages)):
             f.write("{},{}\n".format(languages[i], times[i]))
         f.write("all,{}\n".format(sum(times)))
 
+    languages_from = languages
+    languages_to = ["eng_Latn"]
+
+    averages = [0] * len(languages_to)
 
     accuracies = []
-    for i in range(len(languages)):
+    for i in range(len(languages_from)):
         accuracies.append([])
-        for j in range(len(languages)):
-            print(languages[i] + " - " + languages[j], flush=True)
-            accuracies[-1].append(accuracy_eval(embs[i], embs[j], use_gpu))
+        for j in range(len(languages_to)):
+            print(languages_from[i] + " -> " + languages_to[j], flush=True)
+            accuracies[-1].append(accuracy_eval(embs[languages.index(languages_from[i])], embs[languages.index(languages_to[j])], use_gpu))
+            averages[j] += accuracies[i][j]
 
-    f_accuracies = P.join(output_folder, "accuracy.csv")
+    for j in range(len(languages_to)):
+        averages[j] /= len(languages_from)
+
+    f_accuracies = P.join(output_folder, "{}-FLORES-accuracy.csv".format(name_of_model))
     with open(f_accuracies, "w") as f:
-        for lang in languages:
+        for lang in languages_to:
             f.write("," + lang)
         f.write("\n")
-        for i in range(len(languages)):
-            f.write(languages[i])
-            for j in range(len(languages)):
+        for i in range(len(languages_from)):
+            f.write(languages_from[i])
+            for j in range(len(languages_to)):
                 f.write(",")
                 f.write("{:.4f}".format(accuracies[i][j]))
             f.write("\n")
+        
+        f.write("avg")
+        for j in range(len(languages_to)):
+            f.write(",")
+            f.write("{:.4f}".format(averages[j]))
+        f.write("\n")
+        
 
 
     return languages, times, accuracies
