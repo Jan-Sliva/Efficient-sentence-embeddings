@@ -1,10 +1,10 @@
 from transformers import BertTokenizerFast
 import numpy as np
-
+import os.path as P
 
 tok = BertTokenizerFast.from_pretrained("setu4993/LaBSE")
 
-with open("langs.txt", "r") as f:
+with open(P.join("download_data", "langs.txt"), "r") as f:
     langs = f.readlines()
 
 langs = list(map(lambda x: x.rstrip(), langs))

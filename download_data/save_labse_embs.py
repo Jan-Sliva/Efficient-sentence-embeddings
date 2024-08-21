@@ -1,6 +1,7 @@
 import torch
 from sentence_transformers import SentenceTransformer
 import numpy as np
+import os.path as P
 
 PATH = ""
 
@@ -20,7 +21,7 @@ class Labse:
 
 labse = Labse()
 
-with open("langs.txt", "r") as f:
+with open(P.join("download_data", "langs.txt"), "r") as f:
     langs = f.readlines()
 
 langs = list(map(lambda x: x.rstrip(), langs))

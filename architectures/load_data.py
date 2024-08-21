@@ -5,7 +5,7 @@ from bisect import bisect
 
 class DestillationDataset(Dataset):
     def __init__(self, token_folder, emb_folder):
-        with open("langs.txt", "r") as f:
+        with open(P.join("download_data", "langs.txt"), "r") as f:
             self.langs = f.readlines()
         self.langs = list(map(lambda x: x.rstrip(), self.langs))
 

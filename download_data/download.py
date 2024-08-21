@@ -1,10 +1,11 @@
 from urllib.request import urlretrieve
 import gzip
 import os
+import os.path as P
 
 target_size = 500_000
 
-with open("langs.txt", "r") as f:
+with open(P.join("download_data", "langs.txt"), "r") as f:
     langs = f.readlines()
 
 langs = list(map(lambda x: x.rstrip(), langs))

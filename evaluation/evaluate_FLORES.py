@@ -30,7 +30,7 @@ def FLORES_eval(input_folder, output_folder, extract_emb_f, use_gpu=True):
     if not P.exists(output_folder):
         os.mkdir(output_folder)
 
-    with open("labse_langs_FLORES.txt", "r") as f:
+    with open(P.join("evaluation", "labse_langs_FLORES.txt"), "r") as f:
         languages = f.readlines()
     languages = map(lambda x: x.rstrip(), languages)
 
