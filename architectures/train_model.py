@@ -1,5 +1,5 @@
 import torch
-from load_data import DestillationDataset
+from architectures.load_data import DestillationDataset
 import os.path as P
 from torch.utils.tensorboard import SummaryWriter
 
@@ -37,6 +37,9 @@ def train_one_epoch(model, loader, optimizer, loss_fn, epoch_index, tb_writer, r
             tb_x = epoch_index * len(loader) + i + 1
             tb_writer.add_scalar('Loss/train', last_loss, tb_x)
             running_loss = 0.
+
+        if i >= 20_000:
+            break
 
     return last_loss
 

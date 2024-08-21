@@ -21,7 +21,7 @@ class DestillationDataset(Dataset):
         for l in self.langs:
             self.embs.append(DestillationDataset.load_npy_as_mmap(P.join(self.emb_folder, l + ".npy")))
             self.tokens.append(DestillationDataset.load_npy_as_mmap(P.join(self.token_folder, l + ".npy")))
-            self.tokens_starts.append(DestillationDataset.load_npy_as_mmap(P.join(self.token_folder, l + "-starts.npy")))
+            self.tokens_starts.append(np.load(P.join(self.token_folder, l + "-starts.npy"), allow_pickle=False))
 
             self.prefix_sum_lengths.append(self.prefix_sum_lengths[-1] + np.shape(self.embs[-1])[0])
 
