@@ -1,3 +1,6 @@
+"""
+This module enables evalaution of torch models with pretrained weights
+"""
 import torch
 from transformers import BertTokenizerFast
 from math import ceil

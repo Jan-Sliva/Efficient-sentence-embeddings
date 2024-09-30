@@ -1,3 +1,6 @@
+"""
+This file contains the code for the distillation training. It logs the training loss in tensorboard.
+"""
 import torch
 from architectures.load_data import DestillationDataset
 import os.path as P

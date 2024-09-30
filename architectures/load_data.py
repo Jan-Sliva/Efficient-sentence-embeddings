@@ -1,3 +1,6 @@
+"""
+This file contains the code for loading the data for the distillation training. The format of the data is the same as created by the scripts in the download_data/ folder.
+"""
 import numpy as np
 import os.path as P
 from torch.utils.data import Dataset

@@ -1,3 +1,6 @@
+"""
+This module provides a model which averages input embeddings of pretrained Labse model.
+"""
 import torch
 from transformers import BertModel, BertTokenizerFast
 from math import ceil

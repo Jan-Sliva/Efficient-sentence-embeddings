@@ -1,3 +1,6 @@
+"""
+This script provides function for evaluation on the BUCC 2018 dataset.
+"""
 import numpy as np
 import os
 

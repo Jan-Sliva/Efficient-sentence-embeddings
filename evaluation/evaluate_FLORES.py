@@ -1,3 +1,6 @@
+"""
+This script provides function for evaluation on the FLORES+ dataset.
+"""
 import numpy as np
 import os
 import time

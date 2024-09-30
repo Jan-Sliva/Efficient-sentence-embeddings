@@ -1,3 +1,6 @@
+"""
+This module provides a wrapper for the LaBSE model.
+"""
 import torch
 from sentence_transformers import SentenceTransformer
 
