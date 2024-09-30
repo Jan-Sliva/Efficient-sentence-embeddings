@@ -2,7 +2,7 @@
 This script intializes the model, the folder structure and runs the distillation training. After each epoch the model is saved in "<save_path>/save/model-<epoch>.pt". The tensorboard logs are saved in "<save_path>/tb/".
 
 usage:
-python init_and_train_model.py --save_path <path_to_save_folder> --data_path <path_to_data_folder> --emb_path <path_to_file_with_labse_emb_matrix> --lr <learning_rate> --batch_size <batch_size> --epochs <number_of_epochs>
+python architectures/init_and_train_model.py --save_path <path_to_save_folder> --data_path <path_to_data_folder> --emb_path <path_to_file_with_labse_emb_matrix> --lr <learning_rate> --batch_size <batch_size> --epochs <number_of_epochs>
 """
 from fairseq.models.lightconv import LightConvEncoder
 import os.path as P

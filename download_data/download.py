@@ -2,7 +2,7 @@
 This module provides a script to download and preprocess data from the News Crawl dataset.
 
 usage:
-python download.py --path <path_to_data_folder> --target_size <number_of_lines_to_save_per_language>
+python download_data/download.py --path <path_to_data_folder> --target_size <number_of_lines_to_save_per_language>
 """
 from urllib.request import urlretrieve
 import gzip

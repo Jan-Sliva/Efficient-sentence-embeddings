@@ -2,7 +2,7 @@
 This script is used to predict embeddings for a given set of sentences using a pre-trained model.
 
 Usage:
-python predict.py --model_path <path_to_model_weights> --input_file <path_to_input_file> --output_file <path_to_output_file> --emb_path <path_to_file_with_word_emb_matrix>
+python evaluation/predict.py --model_path <path_to_model_weights> --input_file <path_to_input_file> --output_file <path_to_output_file> --emb_path <path_to_file_with_word_emb_matrix>
 """
 from architectures.init_and_train_model import get_model
 from evaluation.custom_emb import CustomEmb

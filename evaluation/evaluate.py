@@ -2,16 +2,16 @@
 This script evaluates a model (Labse, WordEmb or custom pytorch model) on the BUCC 2018 and FLORES+ datasets.
 
 usage:
-python evaluate.py --model name_of_model --model_path path/to/model/weights.pth --BUCC_folder path/to/BUCC/data --FLORES_folder path/to/FLORES/data --eval_folder path/to/eval/folder
-python evaluate.py --model labse --BUCC_folder path/to/BUCC/data --FLORES_folder path/to/FLORES/data --eval_folder path/to/eval/folder
-python evaluate.py --model word_emb --BUCC_folder path/to/BUCC/data --FLORES_folder path/to/FLORES/data --eval_folder path/to/eval/folder
+python evaluation/evaluate.py --model name_of_model --model_path path/to/model/weights.pth --BUCC_folder path/to/BUCC/data --FLORES_folder path/to/FLORES/data --eval_folder path/to/eval/folder
+python evaluation/evaluate.py --model labse --BUCC_folder path/to/BUCC/data --FLORES_folder path/to/FLORES/data --eval_folder path/to/eval/folder
+python evaluation/evaluate.py --model word_emb --BUCC_folder path/to/BUCC/data --FLORES_folder path/to/FLORES/data --eval_folder path/to/eval/folder
 """
 from evaluation.labse import Labse
 from evaluation.word_emb import WordEmb
 from evaluation.custom_emb import CustomEmb
 from evaluation.evaluate_BUCC import BUCC_eval
 from evaluation.evaluate_FLORES import FLORES_eval
-from architectures.run_model import get_model
+from architectures.init_and_train_model import get_model
 
 import os.path as P
 import os

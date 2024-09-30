@@ -2,7 +2,7 @@
 This script saves the LaBSE embeddings for each language.
 
 usage:
-python save_labse_embs.py --path <path_to_data_folder>
+python download_data/save_labse_embs.py --path <path_to_data_folder>
 """
 import torch
 from sentence_transformers import SentenceTransformer

@@ -2,7 +2,7 @@
 This script saves the LaBSE embedding matrix to a file.
 
 usage:
-python save_labse_emb_matrix.py --path <path_to_file_with_labse_emb_matrix>
+python download_data/save_labse_emb_matrix.py --path <path_to_file_with_labse_emb_matrix>
 """
 
 import torch

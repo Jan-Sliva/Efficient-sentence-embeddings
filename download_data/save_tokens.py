@@ -3,7 +3,7 @@ This script saves the tokens of the News Crawl dataset for each language. The to
 I also save a start map, which is a list of the starting indices of the first token for each sentence.
 
 usage:
-python save_tokens.py --path <path_to_data_folder>
+python download_data/save_tokens.py --path <path_to_data_folder>
 """
 from transformers import BertTokenizerFast
 import numpy as np
