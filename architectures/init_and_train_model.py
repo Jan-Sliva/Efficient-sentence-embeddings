@@ -1,14 +1,14 @@
 """
-This script intializes the model, the folder structure and runs the distillation training.
+This script intializes the model, the folder structure and runs the distillation training. After each epoch the model is saved in "<save_path>/save/model-<epoch>.pt". The tensorboard logs are saved in "<save_path>/tb/".
 
 usage:
-python run_model.py --save_path <path_to_save_folder> --data_path <path_to_data_folder> --emb_path <path_to_labse_embs> --lr <learning_rate> --batch_size <batch_size> --epochs <number_of_epochs>
+python init_and_train_model.py --save_path <path_to_save_folder> --data_path <path_to_data_folder> --emb_path <path_to_labse_embs> --lr <learning_rate> --batch_size <batch_size> --epochs <number_of_epochs>
 """
 from fairseq.models.lightconv import LightConvEncoder
 import os.path as P
 import os
 from architectures.utils import *
-import architectures.train_model
+import architectures.training
 import argparse
 
 def parse_args():
@@ -49,7 +49,7 @@ def main():
 
     light_encoder = get_model(emb_path, dict)
 
-    architectures.train_model.train(light_encoder, data_folder, save_folder, tb_folder, lr, batch_size, epochs)
+    architectures.training.train(light_encoder, data_folder, save_folder, tb_folder, lr, batch_size, epochs)
 
 if __name__ == "__main__":
     main()
