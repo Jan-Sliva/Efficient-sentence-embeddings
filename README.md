@@ -1,7 +1,7 @@
 ## Efficient sentence embedings
 Sentence vector representations, also called sentence embeddings, are nowadays used to transfer simpler classification tasks between languages (we have training data in only one language but need the model to work in multiple languages) and to find parallel training sentences for machine translation. Sentence embeddings are typically the output of a Transformer neural network, so computing such embeddings takes a relatively long time. Moreover, efficient computation requires GPU. The goal of this work will be to develop methods to obtain sentence embeddings more efficiently by using simpler neural networks that learn by knowledge distillation. These simpler networks will include models with 1D convolutions.
 
-Embedings will be evaluated on BUCC2018 and FLORES+ datasets. The pytorch library will be used for implementation.
+Embedings will be evaluated on BUCC2018 and FLORES+ datasets. There will be two baseline models: labse and word embeddings. Labse will be slow and accurate and will be used as a target for knowledge distillation. As the second baseline, I will average input word embedings of labse. This baseline will by slow and not accurate.
 
 ## Conda enviroment
 Install all the dependencies. faiss library needs to be installed from conda-forge and fairseq from github, because there is an error in the official version of fairseq in pip.
@@ -11,6 +11,10 @@ conda activate ESE
 pip install transformers==4.44.2 sentence-transformers==3.1.0
 conda install -c pytorch -c nvidia faiss-gpu=1.8.0
 pip install git+https://github.com/One-sixth/fairseq.git
+```
+Also you need to set PYTHONPATH to include path to this folder.
+```bash
+export PYTHONPATH=$PYTHONPATH:<path_to_this_folder>
 ```
 
 ## Usage
