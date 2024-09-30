@@ -6,7 +6,7 @@ from architectures.load_data import DestillationDataset
 import os.path as P
 from torch.utils.tensorboard import SummaryWriter
 
-def train_one_epoch(model, loader, optimizer, loss_fn, epoch_index, tb_writer, report_each=100):
+def train_one_epoch(model, loader, optimizer, loss_fn, epoch_index, tb_writer, report_each=100, percentage=1):
     running_loss = 0.
     last_loss = 0.
 
@@ -41,13 +41,13 @@ def train_one_epoch(model, loader, optimizer, loss_fn, epoch_index, tb_writer, r
             tb_writer.add_scalar('Loss/train', last_loss, tb_x)
             running_loss = 0.
 
-        if i >= 20_000:
+        if i >= percentage*len(loader):
             break
 
     return last_loss
 
 
-def train(model, data_folder, save_folder, tb_folder, lr, batch_size, epochs=1):
+def train(model, data_folder, save_folder, tb_folder, lr, batch_size, epochs=1, percentage=1):
 
     loss_fn = torch.nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)

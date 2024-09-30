@@ -19,6 +19,7 @@ def parse_args():
     parser.add_argument('--lr', type=float, help='Learning rate', default=0.0005)
     parser.add_argument('--batch_size', type=int, help='Batch size', default=128)
     parser.add_argument('--epochs', type=int, help='Number of epochs', default=1)
+    parser.add_argument('--percentage', type=float, help='Percentage of the data to use in each epoch', default=1)
     return parser.parse_args()
 
 
@@ -38,7 +39,8 @@ def main():
     lr = args.lr
     batch_size = args.batch_size
     epochs = args.epochs
-
+    percentage = args.percentage
+    
     dict = {"layers" : 1, "kernel_sizes" : [31], "conv_type" : "lightweight", "weight_softmax" : True}
 
     create_folder(folder)
@@ -49,7 +51,7 @@ def main():
 
     light_encoder = get_model(emb_path, dict)
 
-    architectures.training.train(light_encoder, data_folder, save_folder, tb_folder, lr, batch_size, epochs)
+    architectures.training.train(light_encoder, data_folder, save_folder, tb_folder, lr, batch_size, epochs, percentage)
 
 if __name__ == "__main__":
     main()
