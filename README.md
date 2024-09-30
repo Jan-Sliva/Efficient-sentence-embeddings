@@ -4,6 +4,14 @@ Sentence vector representations, also called sentence embeddings, are nowadays u
 Embedings will be evaluated on BUCC2018 and FLORES+ datasets. The pytorch library will be used for implementation.
 
 ## Conda enviroment
+Install all the dependencies. faiss library needs to be installed from conda-forge and fairseq from github, because there is an error in the official version of fairseq in pip.
+```bash
+conda create -n ESE python=3.12.5
+conda activate ESE
+pip install transformers==4.44.2 sentence-transformers==3.1.0
+conda install -c pytorch -c nvidia faiss-gpu=1.8.0
+pip install git+https://github.com/One-sixth/fairseq.git
+```
 
 ## Usage
 
@@ -79,3 +87,6 @@ python evaluation/evaluate.py --model word_emb --BUCC_folder <path_to_BUCC_data>
 ```
 
 ### Inference
+```bash
+python evaluation/predict.py --model_path <path_to_model_weights> --input_file <path_to_input_file> --output_file <path_to_output_file> --emb_path <path_to_file_with_word_emb_matrix>
+```
