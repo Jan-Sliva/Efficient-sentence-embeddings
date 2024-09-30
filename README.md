@@ -54,7 +54,7 @@ FLORES+ data should be saved in the following folder structure:
 ### Train the model
 
 ```bash
-python architectures/run_model.py --data_path <path_to_data_folder> --save_path <path_to_save_folder>  --emb_path <path_to_file_with_labse_emb_matrix>
+python architectures/init_and_train_model.py --data_path <path_to_data_folder> --save_path <path_to_save_folder>  --emb_path <path_to_file_with_labse_emb_matrix>
 ```
 Training data should be saved in `<path_to_data_folder>`.
 
