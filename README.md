@@ -3,8 +3,8 @@ Sentence vector representations, also called sentence embeddings, are nowadays u
 
 Embedings will be evaluated on BUCC2018 and FLORES+ datasets. There will be two baseline models: labse and word embeddings. Labse will be slow and accurate and will be used as a target for knowledge distillation. As the second baseline, I will average input word embedings of labse. This baseline will by slow and not accurate.
 
-## Conda enviroment
-Install all the dependencies. faiss library needs to be installed from conda-forge and fairseq from github, because there is an error in the official version of fairseq in pip.
+## Set up the enviroment
+Install the following dependencies. Faiss library can be only installed from conda-forge. Fairseq library is installed from github, because there is an error in the official version of fairseq in pip.
 ```bash
 conda create -n ESE python=3.12.5
 conda activate ESE
