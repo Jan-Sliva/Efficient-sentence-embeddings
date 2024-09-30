@@ -16,6 +16,9 @@ def main():
     parser.add_argument('--target_size', type=int, default=500_000, help='Number of lines to save per language')
     args = parser.parse_args()
 
+    if not P.exists(args.path):
+        os.mkdir(args.path)
+
     with open(P.join("download_data", "langs.txt"), "r") as f:
         langs = f.read().splitlines()
 
