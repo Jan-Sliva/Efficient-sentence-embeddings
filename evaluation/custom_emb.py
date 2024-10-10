@@ -1,20 +1,19 @@
 """
-This module enables evalaution of torch models with pretrained weights
+This module enables evaluation of torch models with pretrained weights
 """
 import torch
 from transformers import BertTokenizerFast
 from math import ceil
+from architectures.base_distillation_model import BaseDistillationModel
 
 class CustomEmb:
 
-    def __init__(self, model, weights_path, emb_dim) -> None:
+    def __init__(self, model: BaseDistillationModel, weights_path: str, emb_dim: int) -> None:
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.tokenizer = BertTokenizerFast.from_pretrained("setu4993/LaBSE")
         self.model = model
-        self.model.load_state_dict(torch.load(weights_path))
-        self.model.eval()
+        self.model.load_weights(weights_path)
         self.emb_dim = emb_dim
-
 
     def predict(self, sentences, batch_size, verbose = False):
         inputs = self.tokenizer(sentences, return_tensors="pt", padding=True)
@@ -26,8 +25,6 @@ class CustomEmb:
             if (verbose): print(f"batch no. {1 + s//batch_size}/{ceil(len(sentences)/batch_size)}")
             e = min(s+batch_size, len(sentences))
             with torch.no_grad():
-                embs[s:e] = self.model(inputs["input_ids"][s:e])["encoder_out"][0].mean(dim=0)
-                embs[s:e] = torch.nn.functional.normalize(embs[s:e], p=2, dim=1)
+                embs[s:e] = self.model.inference(inputs["input_ids"][s:e])
 
         return embs.cpu().detach().numpy()
-  

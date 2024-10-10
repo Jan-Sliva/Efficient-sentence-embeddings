@@ -4,10 +4,9 @@ This script is used to predict embeddings for a given set of sentences using a p
 Usage:
 python evaluation/predict.py --model_path <path_to_model_weights> --input_file <path_to_input_file> --output_file <path_to_output_file> --emb_path <path_to_file_with_word_emb_matrix>
 """
-from architectures.init_and_train_model import get_model
+from architectures.light_conv_model import LightConvModel
 from evaluation.custom_emb import CustomEmb
 
-import os.path as P
 import argparse
 import numpy as np
 import torch
@@ -27,23 +26,21 @@ def main():
     if args.verbose:
         print(f"Loading model from {args.model_path}")
 
-    # Load the model
-    model = CustomEmb(get_model(args.emb_path), args.model_path, args.emb_dim)
-    model.load_state_dict(torch.load(args.model_path))
-    model.eval()
+    # Initialize the LightConvModel
+    model = LightConvModel(args.emb_path)
+    
+    # Create CustomEmb instance
+    custom_emb = CustomEmb(model, args.model_path, args.emb_dim)
 
     if args.verbose:
         print(f"Model loaded successfully")
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model.to(device)
 
     # Read sentences from input file
     with open(args.input_file, 'r', encoding='utf-8') as f:
         sentences = [line.strip() for line in f]
 
     # Predict embeddings
-    embeddings = model.predict(sentences, args.batch_size, args.verbose)
+    embeddings = custom_emb.predict(sentences, args.batch_size, args.verbose)
 
     # Save predictions to output file
     np.save(args.output_file, embeddings)
