@@ -4,24 +4,38 @@ This file contains the LightConvModel class for distillation training, loading w
 import torch
 from torch.utils.data import DataLoader, random_split
 from torch.utils.tensorboard import SummaryWriter
-from fairseq.models.lightconv import LightConvEncoder
+from fairseq.models.lightconv import LightConvEncoder, base_architecture
 from architectures.load_data import DestillationDataset
-from architectures.utils import load_embs, get_args
+from architectures.utils import load_embs
 from architectures.base_distillation_model import BaseDistillationModel
 import os.path as P
+from argparse import Namespace
 
 class LightConvModel(BaseDistillationModel):
     def __init__(self, emb_path, layers=1, kernel_sizes=[31], conv_type="lightweight", weight_softmax=True):
         self.embs = load_embs(emb_path)
-        dict_args = {
-            "layers": layers,
-            "kernel_sizes": kernel_sizes,
-            "conv_type": conv_type,
-            "weight_softmax": weight_softmax
-        }
-        args = get_args(**dict_args)
+        args = self._get_args(layers, kernel_sizes, conv_type, weight_softmax)
         self.model = LightConvEncoder(args, None, self.embs).to("cuda")
         self.loss_fn = torch.nn.MSELoss()
+
+    def _get_args(self, layers, kernel_sizes, conv_type, weight_softmax):
+        """
+        Sets the arguments for the LightConv model.
+
+        layers - int
+        kernel_sizes - List[int] (default - all 31)
+        conv_type - (lightweight|dynamic)
+        weight_softmax - bool
+        """
+        args = Namespace()
+        args.encoder_layers = layers
+        args.encoder_kernel_size_list = kernel_sizes
+        args.encoder_conv_type = conv_type
+        args.weight_softmax = weight_softmax
+        args.encoder_embed_dim = 768
+        args.max_source_positions = 1024
+        base_architecture(args)
+        return args
         
     def train(self, data_folder, save_folder, tb_folder, lr, batch_size, epochs=1, percentage=1, val_split=0.1):
         optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
