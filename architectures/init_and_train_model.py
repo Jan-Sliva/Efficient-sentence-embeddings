@@ -1,14 +1,15 @@
 """
-This script intializes the model, the folder structure and runs the distillation training. After each epoch the model is saved in "<save_path>/save/model-<epoch>.pt". The tensorboard logs are saved in "<save_path>/tb/".
+This script initializes the LightConvModel, the folder structure and runs the distillation training.
+After each epoch the model is saved in "<save_path>/save/model-<epoch>.pt".
+The tensorboard logs are saved in "<save_path>/tb/".
 
 usage:
 python architectures/init_and_train_model.py --save_path <path_to_save_folder> --data_path <path_to_data_folder> --emb_path <path_to_file_with_labse_emb_matrix> --lr <learning_rate> --batch_size <batch_size> --epochs <number_of_epochs>
 """
-from fairseq.models.lightconv import LightConvEncoder
 import os.path as P
 import os
-from architectures.utils import *
-import architectures.training
+from architectures.light_conv_model import LightConvModel
+from architectures.utils import create_folder
 import argparse
 
 def parse_args():
@@ -22,16 +23,6 @@ def parse_args():
     parser.add_argument('--percentage', type=float, help='Percentage of the data to use in each epoch', default=1)
     return parser.parse_args()
 
-
-def get_model(emb_path):
-    embs = load_embs(emb_path)
-    dict = {"layers" : 1, "kernel_sizes" : [31], "conv_type" : "lightweight", "weight_softmax" : True}
-
-    args = get_args(**dict)
-
-    return LightConvEncoder(args, None, embs).to("cuda")
-
-
 def main():
     args = parse_args()
 
@@ -43,16 +34,14 @@ def main():
     epochs = args.epochs
     percentage = args.percentage
 
-
     create_folder(folder)
     save_folder = P.join(folder, "save")
     create_folder(save_folder)
     tb_folder = P.join(folder, "tb")
     create_folder(tb_folder)
 
-    light_encoder = get_model(emb_path)
-
-    architectures.training.train(light_encoder, data_folder, save_folder, tb_folder, lr, batch_size, epochs, percentage)
+    model = LightConvModel(emb_path, layers=1, kernel_sizes=[31], conv_type="lightweight", weight_softmax=True)
+    model.train(data_folder, save_folder, tb_folder, lr, batch_size, epochs, percentage)
 
 if __name__ == "__main__":
     main()
