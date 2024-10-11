@@ -61,13 +61,17 @@ class LightConvModel(BaseRetrievalModel):
         best_loss = float("inf")
         best_model_path = None
 
+        weights_folder = P.join(save_folder, "weights")
+        if not P.exists(weights_folder):
+            os.makedirs(weights_folder)
+
         for e in range(self.params["epochs"]):
             print(f"Epoch {e}", flush=True)
             last_loss = self._train_one_epoch(train_loader, val_loader, optimizer, e, writer)
             if last_loss < best_loss:
                 best_loss = last_loss
-                best_model_path = P.join(save_folder, "weights", f"{e+1}.pt")
-            torch.save(self.model.state_dict(), P.join(save_folder, "weights", f"{e+1}.pt"))
+                best_model_path = P.join(weights_folder, f"{e+1}.pt")
+            torch.save(self.model.state_dict(), P.join(weights_folder, f"{e+1}.pt"))
 
         self.params["best_model_path"] = best_model_path
 

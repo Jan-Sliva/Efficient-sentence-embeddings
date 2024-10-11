@@ -5,7 +5,7 @@ import json
 from evaluation.BUCC_evaluator import BUCCEvaluator
 from evaluation.FLORES_evaluator import FLORESEvaluator
 import json
-import pathlib as P
+import os.path as P
 
 def load_model(model_class, model_path=None):
     if (model_path != None): 
