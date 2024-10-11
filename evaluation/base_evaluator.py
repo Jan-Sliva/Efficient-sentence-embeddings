@@ -1,11 +1,16 @@
 from abc import ABC, abstractmethod
+from architectures.base_retrieval_model import BaseRetrievalModel
 
 class BaseEvaluator(ABC):
+    @abstractmethod
+    def __init__(self, **params):
+        pass
+
     @property
     @abstractmethod
     def name(self):
         pass
 
     @abstractmethod
-    def evaluate(self, input_folder, output_folder, extract_emb_f, use_gpu=True):
+    def evaluate(self, retrieval_model : BaseRetrievalModel):
         pass

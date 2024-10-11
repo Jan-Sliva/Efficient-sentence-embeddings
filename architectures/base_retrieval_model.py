@@ -8,24 +8,23 @@ import numpy as np
 
 class BaseRetrievalModel(ABC):
     @abstractmethod
-    def __init__(self, emb_path: str, params: dict):
+    def __init__(self, **params):
         """
         Initialize the distillation model.
 
         Args:
-            emb_path (str): Path to the embeddings file.
-            params (dict): Additional parameters for model configuration.
+            params (dict): Parameters for model configuration.
         """
         pass
 
     @abstractmethod
-    def train(self, data_folder: str, save_folder: str, tb_folder: str, params: dict):
+    def train(self):
         """
         Train the distillation model.
 
         Args:
             data_folder (str): Path to the folder containing training data.
-            save_folder (str): Path to save the trained model checkpoints.
+            save_folder (str): Path to save model parameters, weights and more.
             tb_folder (str): Path to save TensorBoard logs.
             params (dict): Dictionary containing training parameters such as:
                 - lr (float): Learning rate for the optimizer.

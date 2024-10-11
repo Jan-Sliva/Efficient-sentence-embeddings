@@ -8,7 +8,7 @@ from architectures.base_retrieval_model import BaseRetrievalModel
 
 class InputEmbAverageModel(BaseRetrievalModel):
 
-    def __init__(self, emb_path = None, params = None) -> None:
+    def __init__(self, **params):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.tokenizer = BertTokenizerFast.from_pretrained("setu4993/LaBSE")
         self.model = BertModel.from_pretrained("setu4993/LaBSE").to(self.device)

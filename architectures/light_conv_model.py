@@ -12,10 +12,12 @@ import os.path as P
 from argparse import Namespace
 from transformers import BertTokenizerFast
 from math import ceil
-
+import json
 class LightConvModel(BaseRetrievalModel):
-    def __init__(self, emb_path, params):
-        self.embs = load_embs(emb_path)
+    def __init__(self, **params):
+        self.params = params
+
+        self.embs = load_embs(params["emb_path"])
         args = self._get_args(params)
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model = LightConvEncoder(args, None, self.embs).to(self.device)
@@ -27,7 +29,7 @@ class LightConvModel(BaseRetrievalModel):
         Sets the arguments for the LightConv model.
 
         layers - int
-        kernel_sizes - List[int] (default - all 31)
+        kernel_sizes - List[int] (default - [31])
         conv_type - (lightweight|dynamic)
         weight_softmax - bool
         """
@@ -41,22 +43,38 @@ class LightConvModel(BaseRetrievalModel):
         base_architecture(args)
         return args
         
-    def train(self, data_folder, save_folder, tb_folder, params):
+    def train(self):
+        data_folder = self.params["data_folder"]
+        save_folder = self.params["save_folder"]
+        tb_folder = self.params["tb_folder"]
+
         if self.loss_fn is None:
             self.loss_fn = torch.nn.MSELoss()
 
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=params["lr"])
-        train_loader, val_loader = self._get_data_loaders(data_folder, params["batch_size"], params["val_split"])
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.params["lr"])
+        train_loader, val_loader = self._get_data_loaders(data_folder, self.params["batch_size"], self.params["val_split"])
         writer = SummaryWriter(tb_folder)
 
         self.model.train()
 
-        for e in range(params["epochs"]):
-            print(f"Epoch {e}", flush=True)
-            self._train_one_epoch(train_loader, val_loader, optimizer, e, writer, params["percentage"])
-            torch.save(self.model.state_dict(), P.join(save_folder, f"model-{e+1}.pt"))
+        best_loss = float("inf")
+        best_model_path = None
 
-    def load_weights(self, weights_path):
+        for e in range(self.params["epochs"]):
+            print(f"Epoch {e}", flush=True)
+            last_loss = self._train_one_epoch(train_loader, val_loader, optimizer, e, writer, self.params["percentage"])
+            if last_loss < best_loss:
+                best_loss = last_loss
+                best_model_path = P.join(save_folder, "weights", f"{e+1}.pt")
+            torch.save(self.model.state_dict(), P.join(save_folder, "weights", f"{e+1}.pt"))
+
+        self.params["best_model_path"] = best_model_path
+
+        json.dump(self.params, open(P.join(save_folder, "params.json"), "w"))
+
+    def load_weights(self, weights_path = None):
+        if weights_path is None:
+            weights_path = self.params["best_model_path"]
         self.model.load_state_dict(torch.load(weights_path))
         self.model.eval()
 
