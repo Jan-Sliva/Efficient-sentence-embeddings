@@ -7,18 +7,22 @@ from torch.utils.tensorboard import SummaryWriter
 from fairseq.models.lightconv import LightConvEncoder, base_architecture
 from architectures.load_data import DestillationDataset
 from architectures.utils import load_embs
-from architectures.base_distillation_model import BaseDistillationModel
+from architectures.base_retrieval_model import BaseRetrievalModel
 import os.path as P
 from argparse import Namespace
+from transformers import BertTokenizerFast
+from math import ceil
 
-class LightConvModel(BaseDistillationModel):
-    def __init__(self, emb_path, layers=1, kernel_sizes=[31], conv_type="lightweight", weight_softmax=True):
+class LightConvModel(BaseRetrievalModel):
+    def __init__(self, emb_path, params):
         self.embs = load_embs(emb_path)
-        args = self._get_args(layers, kernel_sizes, conv_type, weight_softmax)
-        self.model = LightConvEncoder(args, None, self.embs).to("cuda")
-        self.loss_fn = torch.nn.MSELoss()
+        args = self._get_args(params)
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.model = LightConvEncoder(args, None, self.embs).to(self.device)
+        self.loss_fn = None
+        self.tokenizer = None
 
-    def _get_args(self, layers, kernel_sizes, conv_type, weight_softmax):
+    def _get_args(self, params):
         """
         Sets the arguments for the LightConv model.
 
@@ -28,25 +32,28 @@ class LightConvModel(BaseDistillationModel):
         weight_softmax - bool
         """
         args = Namespace()
-        args.encoder_layers = layers
-        args.encoder_kernel_size_list = kernel_sizes
-        args.encoder_conv_type = conv_type
-        args.weight_softmax = weight_softmax
+        args.encoder_layers = params["layers"]
+        args.encoder_kernel_size_list = params["kernel_sizes"]
+        args.encoder_conv_type = params["conv_type"]
+        args.weight_softmax = params["weight_softmax"]
         args.encoder_embed_dim = 768
         args.max_source_positions = 1024
         base_architecture(args)
         return args
         
-    def train(self, data_folder, save_folder, tb_folder, lr, batch_size, epochs=1, percentage=1, val_split=0.1):
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
-        train_loader, val_loader = self._get_data_loaders(data_folder, batch_size, val_split)
+    def train(self, data_folder, save_folder, tb_folder, params):
+        if self.loss_fn is None:
+            self.loss_fn = torch.nn.MSELoss()
+
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=params["lr"])
+        train_loader, val_loader = self._get_data_loaders(data_folder, params["batch_size"], params["val_split"])
         writer = SummaryWriter(tb_folder)
 
         self.model.train()
 
-        for e in range(epochs):
+        for e in range(params["epochs"]):
             print(f"Epoch {e}", flush=True)
-            self._train_one_epoch(train_loader, val_loader, optimizer, e, writer, percentage)
+            self._train_one_epoch(train_loader, val_loader, optimizer, e, writer, params["percentage"])
             torch.save(self.model.state_dict(), P.join(save_folder, f"model-{e+1}.pt"))
 
     def load_weights(self, weights_path):
@@ -126,3 +133,21 @@ class LightConvModel(BaseDistillationModel):
         val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn_padd)
 
         return train_loader, val_loader
+
+    def predict(self, sentences, batch_size, verbose=False):
+        if self.tokenizer is None:
+            self.tokenizer = BertTokenizerFast.from_pretrained("setu4993/LaBSE")
+
+        inputs = self.tokenizer(sentences, return_tensors="pt", padding=True)
+
+        embs = torch.zeros((len(sentences), self.model.embed_tokens.weight.shape[1])).to(self.device)
+        inputs["input_ids"] = inputs["input_ids"].to(self.device)
+
+        for s in range(0, len(sentences), batch_size):
+            if verbose:
+                print(f"batch no. {1 + s//batch_size}/{ceil(len(sentences)/batch_size)}")
+            e = min(s+batch_size, len(sentences))
+            with torch.no_grad():
+                embs[s:e] = self.inference(inputs["input_ids"][s:e])
+
+        return embs.cpu().detach().numpy()

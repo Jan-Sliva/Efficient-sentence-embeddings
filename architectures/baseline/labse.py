@@ -3,10 +3,12 @@ This module provides a wrapper for the LaBSE model.
 """
 import torch
 from sentence_transformers import SentenceTransformer
+from architectures.base_retrieval_model import BaseRetrievalModel
 
-class Labse:
 
-    def __init__(self) -> None:
+class Labse(BaseRetrievalModel):
+
+    def __init__(self, emb_path = None, params = None) -> None:
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model = SentenceTransformer('sentence-transformers/LaBSE')
         if self.device == "cpu":

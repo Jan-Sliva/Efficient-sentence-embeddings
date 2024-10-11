@@ -4,10 +4,11 @@ This module provides a model which averages input embeddings of pretrained Labse
 import torch
 from transformers import BertModel, BertTokenizerFast
 from math import ceil
+from architectures.base_retrieval_model import BaseRetrievalModel
 
-class WordEmb:
+class InputEmbAverageModel(BaseRetrievalModel):
 
-    def __init__(self) -> None:
+    def __init__(self, emb_path = None, params = None) -> None:
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.tokenizer = BertTokenizerFast.from_pretrained("setu4993/LaBSE")
         self.model = BertModel.from_pretrained("setu4993/LaBSE").to(self.device)
@@ -46,7 +47,7 @@ class WordEmb:
 
     
 if __name__ == "__main__":
-    model = WordEmb()
+    model = InputEmbAverageModel()
     english_sentences = [
         "dog",
         "Puppies are nice.",

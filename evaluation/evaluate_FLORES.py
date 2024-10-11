@@ -1,108 +1,83 @@
-"""
-This script provides function for evaluation on the FLORES+ dataset.
-"""
 import numpy as np
 import os
 import time
-
 import faiss
-
 import os.path as P
-
+from evaluation.base_evaluator import BaseEvaluator
 from evaluation.utils_retrieve import knn
 
-# FLORES - accuracy
-# gold labels are (0, 0), (1, 1), ... (i, i), ...
-def accuracy_eval(x: np.array, y: np.array, use_gpu):
+class FLORESEvaluator(BaseEvaluator):
+    @property
+    def name(self):
+        return "FLORES"
 
-    assert x.shape[0] == y.shape[0], "source and target files have different number of elements"
+    def __init__(self):
+        with open(P.join("evaluation", "labse_langs_FLORES.txt"), "r") as f:
+            self.languages = [lang.strip() for lang in f.readlines()]
+        self.languages_to = ["eng_Latn"]
 
-    N = x.shape[0]
+    def evaluate(self, input_folder, output_folder, extract_emb_f, use_gpu=True):
+        if not P.exists(output_folder):
+            os.makedirs(output_folder)
 
-    _, ind = knn(x, y, 1, use_gpu)
-
-    no_correct = 0
-    for i in range(N):
-        if i == ind[i][0]:
-            no_correct += 1
+        input_folder = P.join(input_folder, "devtest")
+        embs, times = self._extract_embeddings(input_folder, extract_emb_f)
         
-    return no_correct/N
+        self._write_times(output_folder, times)
+        accuracies, averages = self._calculate_accuracies(embs, use_gpu)
+        self._write_accuracies(output_folder, accuracies, averages)
 
-def FLORES_eval(input_folder, output_folder, extract_emb_f, name_of_model, use_gpu=True):
+        return self.languages, times, accuracies
 
-    if not P.exists(output_folder):
-        os.mkdir(output_folder)
+    def _extract_embeddings(self, input_folder, extract_emb_f):
+        embs = []
+        times = []
+        for lang in self.languages:
+            file = P.join(input_folder, f"devtest.{lang}")
+            with open(file, encoding="utf-8") as f:
+                sent_list = [l.rstrip("\n") for l in f]
 
-    with open(P.join("evaluation", "labse_langs_FLORES.txt"), "r") as f:
-        languages = f.readlines()
-    languages = map(lambda x: x.rstrip(), languages)
+            start = time.time()
+            l_emb = extract_emb_f(sent_list)
+            end = time.time()
 
-    languages = list(languages)
+            faiss.normalize_L2(l_emb)
+            embs.append(l_emb)
+            times.append(end - start)
+        return embs, times
 
-    input_folder = P.join(input_folder, "devtest")
+    def _write_times(self, output_folder, times):
+        f_times = P.join(output_folder, f"{self.name}-time.csv")
+        with open(f_times, "w") as f:
+            f.write("language,time\n")
+            for lang, time in zip(self.languages, times):
+                f.write(f"{lang},{time}\n")
+            f.write(f"all,{sum(times)}\n")
 
-    embs = []
-    times = []
+    def _calculate_accuracies(self, embs, use_gpu):
+        accuracies = []
+        averages = [0] * len(self.languages_to)
+        for i, lang_from in enumerate(self.languages):
+            accuracies.append([])
+            for j, lang_to in enumerate(self.languages_to):
+                print(f"{lang_from} -> {lang_to}", flush=True)
+                acc = self._accuracy_eval(embs[i], embs[self.languages.index(lang_to)], use_gpu)
+                accuracies[-1].append(acc)
+                averages[j] += acc
+        averages = [avg / len(self.languages) for avg in averages]
+        return accuracies, averages
 
-    
-    for lang in languages:
-        file = P.join(input_folder, "devtest." + lang)
-        with open(file, encoding="utf-8") as f:
-            sent_list = [l.rstrip("\n") for l in f]
+    def _accuracy_eval(self, x: np.array, y: np.array, use_gpu):
+        assert x.shape[0] == y.shape[0], "source and target files have different number of elements"
+        N = x.shape[0]
+        _, ind = knn(x, y, 1, use_gpu)
+        no_correct = sum(i == ind[i][0] for i in range(N))
+        return no_correct / N
 
-        start = time.time()
-        l_emb = extract_emb_f(sent_list)
-        end = time.time()
-    
-        faiss.normalize_L2(l_emb)
-
-        embs.append(l_emb)
-        times.append(end-start)
-
-        
-    f_times = P.join(output_folder, "{}-FLORES-time.csv".format(name_of_model))
-    with open(f_times, "w") as f:
-        f.write("language,time\n")
-        for i in range(len(languages)):
-            f.write("{},{}\n".format(languages[i], times[i]))
-        f.write("all,{}\n".format(sum(times)))
-
-    languages_from = languages
-    languages_to = ["eng_Latn"]
-
-    averages = [0] * len(languages_to)
-
-    accuracies = []
-    for i in range(len(languages_from)):
-        accuracies.append([])
-        for j in range(len(languages_to)):
-            print(languages_from[i] + " -> " + languages_to[j], flush=True)
-            accuracies[-1].append(accuracy_eval(embs[languages.index(languages_from[i])], embs[languages.index(languages_to[j])], use_gpu))
-            averages[j] += accuracies[i][j]
-
-    for j in range(len(languages_to)):
-        averages[j] /= len(languages_from)
-
-    f_accuracies = P.join(output_folder, "{}-FLORES-accuracy.csv".format(name_of_model))
-    with open(f_accuracies, "w") as f:
-        for lang in languages_to:
-            f.write("," + lang)
-        f.write("\n")
-        for i in range(len(languages_from)):
-            f.write(languages_from[i])
-            for j in range(len(languages_to)):
-                f.write(",")
-                f.write("{:.4f}".format(accuracies[i][j]))
-            f.write("\n")
-        
-        f.write("avg")
-        for j in range(len(languages_to)):
-            f.write(",")
-            f.write("{:.4f}".format(averages[j]))
-        f.write("\n")
-        
-
-
-    return languages, times, accuracies
-
-
+    def _write_accuracies(self, output_folder, accuracies, averages):
+        f_accuracies = P.join(output_folder, f"{self.name}-accuracy.csv")
+        with open(f_accuracies, "w") as f:
+            f.write("," + ",".join(self.languages_to) + "\n")
+            for lang, acc_row in zip(self.languages, accuracies):
+                f.write(f"{lang}," + ",".join(f"{acc:.4f}" for acc in acc_row) + "\n")
+            f.write("avg," + ",".join(f"{avg:.4f}" for avg in averages) + "\n")

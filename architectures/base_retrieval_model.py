@@ -4,22 +4,22 @@ This file contains the abstract base class for distillation models.
 
 from abc import ABC, abstractmethod
 import torch
+import numpy as np
 
-class BaseDistillationModel(ABC):
+class BaseRetrievalModel(ABC):
     @abstractmethod
-    def __init__(self, emb_path: str, **kwargs):
+    def __init__(self, emb_path: str, params: dict):
         """
         Initialize the distillation model.
 
         Args:
             emb_path (str): Path to the embeddings file.
-            **kwargs: Additional keyword arguments for model configuration.
+            params (dict): Additional parameters for model configuration.
         """
         pass
 
     @abstractmethod
-    def train(self, data_folder: str, save_folder: str, tb_folder: str, 
-              lr: float, batch_size: int, epochs: int = 1, percentage: float = 1, val_split: float = 0.1):
+    def train(self, data_folder: str, save_folder: str, tb_folder: str, params: dict):
         """
         Train the distillation model.
 
@@ -27,10 +27,12 @@ class BaseDistillationModel(ABC):
             data_folder (str): Path to the folder containing training data.
             save_folder (str): Path to save the trained model checkpoints.
             tb_folder (str): Path to save TensorBoard logs.
-            lr (float): Learning rate for the optimizer.
-            batch_size (int): Batch size for training.
-            epochs (int, optional): Number of training epochs. Defaults to 1.
-            percentage (float, optional): Percentage of data to use in each epoch. Defaults to 1.
+            params (dict): Dictionary containing training parameters such as:
+                - lr (float): Learning rate for the optimizer.
+                - batch_size (int): Batch size for training.
+                - epochs (int): Number of training epochs.
+                - percentage (float): Percentage of data to use in each epoch.
+                - val_split (float): Validation split ratio.
         """
         pass
 
@@ -54,5 +56,20 @@ class BaseDistillationModel(ABC):
 
         Returns:
             torch.Tensor: Output tensor from the model.
+        """
+        pass
+
+    @abstractmethod
+    def predict(self, sentences: list, batch_size: int, verbose: bool = False) -> np.ndarray:
+        """
+        Generate embeddings for a list of sentences.
+
+        Args:
+            sentences (list): List of input sentences.
+            batch_size (int): Batch size for processing.
+            verbose (bool, optional): Whether to print progress. Defaults to False.
+
+        Returns:
+            np.ndarray: Array of embeddings for the input sentences.
         """
         pass
