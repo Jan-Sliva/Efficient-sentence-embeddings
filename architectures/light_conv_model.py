@@ -27,17 +27,12 @@ class LightConvModel(BaseRetrievalModel):
     def _get_args(self, params):
         """
         Sets the arguments for the LightConv model.
-
-        layers - int
-        kernel_sizes - List[int] (default - [31])
-        conv_type - (lightweight|dynamic)
-        weight_softmax - bool
         """
         args = Namespace()
-        args.encoder_layers = params["layers"]
-        args.encoder_kernel_size_list = params["kernel_sizes"]
-        args.encoder_conv_type = params["conv_type"]
-        args.weight_softmax = params["weight_softmax"]
+        args.encoder_layers = params.get("layers", 1)
+        args.encoder_kernel_size_list = params.get("kernel_sizes", [31])
+        args.encoder_conv_type = params.get("conv_type", "lightweight")
+        args.weight_softmax = params.get("weight_softmax", True)
         args.encoder_embed_dim = 768
         args.max_source_positions = 1024
         base_architecture(args)
@@ -52,7 +47,7 @@ class LightConvModel(BaseRetrievalModel):
             self.loss_fn = torch.nn.MSELoss()
 
         optimizer = torch.optim.Adam(self.model.parameters(), lr=self.params["lr"])
-        train_loader, val_loader = self._get_data_loaders(data_folder, self.params["batch_size"], self.params["val_split"])
+        train_loader, val_loader = self._get_data_loaders(data_folder, self.params["batch_size"], self.params["val_sentences"])
         writer = SummaryWriter(tb_folder)
 
         self.model.train()
@@ -62,7 +57,7 @@ class LightConvModel(BaseRetrievalModel):
 
         for e in range(self.params["epochs"]):
             print(f"Epoch {e}", flush=True)
-            last_loss = self._train_one_epoch(train_loader, val_loader, optimizer, e, writer, self.params["percentage"])
+            last_loss = self._train_one_epoch(train_loader, val_loader, optimizer, e, writer)
             if last_loss < best_loss:
                 best_loss = last_loss
                 best_model_path = P.join(save_folder, "weights", f"{e+1}.pt")
@@ -85,7 +80,7 @@ class LightConvModel(BaseRetrievalModel):
             output = torch.nn.functional.normalize(output, p=2, dim=1)
         return output
 
-    def _train_one_epoch(self, train_loader, val_loader, optimizer, epoch_index, tb_writer, percentage, report_each=100):
+    def _train_one_epoch(self, train_loader, val_loader, optimizer, epoch_index, tb_writer, percentage, report_each):
         running_loss = 0.
         last_loss = 0.
 
@@ -100,8 +95,8 @@ class LightConvModel(BaseRetrievalModel):
             optimizer.step()
 
             running_loss += loss.item()
-            if i % report_each == (report_each-1):
-                last_loss = running_loss / report_each
+            if i % self.params["report_each"] == (self.params["report_each"]-1):
+                last_loss = running_loss / self.params["report_each"]
                 print(f'  batch {i + 1} loss: {last_loss}', flush=True)
                 tb_x = epoch_index * len(train_loader) + i + 1
                 tb_writer.add_scalar('Loss/train', last_loss, tb_x)
@@ -112,10 +107,10 @@ class LightConvModel(BaseRetrievalModel):
                 print(f'  batch {i + 1} validation loss: {val_loss}', flush=True)
                 tb_writer.add_scalar('Loss/validation', val_loss, tb_x)
 
-            if i >= percentage * len(train_loader):
+            if i >= self.params["percentage"] * len(train_loader):
                 break
 
-        return last_loss
+        return val_loss
 
     def _validate(self, val_loader):
         self.model.eval()
@@ -132,7 +127,7 @@ class LightConvModel(BaseRetrievalModel):
         self.model.train()
         return avg_loss
 
-    def _get_data_loaders(self, data_folder, batch_size, val_split=0.1):
+    def _get_data_loaders(self, data_folder, batch_size, val_sentences):
         def collate_fn_padd(batch):
             input = [torch.Tensor(t[0]).to("cuda", dtype=torch.int32) for t in batch]
             input = torch.nn.utils.rnn.pad_sequence(input, padding_value=0, batch_first=True)
@@ -143,7 +138,7 @@ class LightConvModel(BaseRetrievalModel):
             return input, output
 
         dataset = DestillationDataset(P.join(data_folder, "tokens"), P.join(data_folder, "labse_embs"))
-        val_size = int(len(dataset) * val_split)
+        val_size = min(val_sentences, len(dataset))
         train_size = len(dataset) - val_size
         train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
 

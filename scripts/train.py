@@ -16,11 +16,12 @@ params file for LightConvModel should contain the following fields:
         - conv_type: str, type of convolution ('lightweight' or 'dynamic')
         - weight_softmax: bool, whether to use softmax on weights
     training:
-        - val_split: float, fraction of data to use for validation
+        - val_sentences: int, number of sentences to use for validation
         - lr: float, learning rate for the optimizer
         - batch_size: int, batch size for training
         - epochs: int, number of training epochs
         - percentage: float, percentage of training data to use in each epoch
+        - report_each: int, number of epochs between each validationreport
 """
 import argparse
 import importlib
