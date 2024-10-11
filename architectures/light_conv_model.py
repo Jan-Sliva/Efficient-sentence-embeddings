@@ -9,10 +9,12 @@ from architectures.load_data import DestillationDataset
 from architectures.utils import load_embs
 from architectures.base_retrieval_model import BaseRetrievalModel
 import os.path as P
+import os
 from argparse import Namespace
 from transformers import BertTokenizerFast
 from math import ceil
 import json
+
 class LightConvModel(BaseRetrievalModel):
     def __init__(self, **params):
         self.params = params
@@ -40,8 +42,12 @@ class LightConvModel(BaseRetrievalModel):
         
     def train(self):
         data_folder = self.params["data_folder"]
-        save_folder = self.params["save_folder"]
+        save_folder = P.join(self.params["save_folder"], self.params["name"])
         tb_folder = self.params["tb_folder"]
+
+        for folder in [save_folder, tb_folder, data_folder]:
+            if not P.exists(folder):
+                os.makedirs(folder)
 
         if self.loss_fn is None:
             self.loss_fn = torch.nn.MSELoss()
@@ -80,7 +86,7 @@ class LightConvModel(BaseRetrievalModel):
             output = torch.nn.functional.normalize(output, p=2, dim=1)
         return output
 
-    def _train_one_epoch(self, train_loader, val_loader, optimizer, epoch_index, tb_writer, percentage, report_each):
+    def _train_one_epoch(self, train_loader, val_loader, optimizer, epoch_index, tb_writer):
         running_loss = 0.
         last_loss = 0.
 
@@ -99,13 +105,13 @@ class LightConvModel(BaseRetrievalModel):
                 last_loss = running_loss / self.params["report_each"]
                 print(f'  batch {i + 1} loss: {last_loss}', flush=True)
                 tb_x = epoch_index * len(train_loader) + i + 1
-                tb_writer.add_scalar('Loss/train', last_loss, tb_x)
                 running_loss = 0.
 
                 # Run validation after every 'report_each' training steps
                 val_loss = self._validate(val_loader)
                 print(f'  batch {i + 1} validation loss: {val_loss}', flush=True)
-                tb_writer.add_scalar('Loss/validation', val_loss, tb_x)
+
+                tb_writer.add_scalars(self.params["name"], {"train_loss": last_loss, "validation_loss": val_loss}, tb_x)
 
             if i >= self.params["percentage"] * len(train_loader):
                 break
