@@ -71,7 +71,7 @@ class LightConvModel(BaseRetrievalModel):
             if last_loss < best_loss:
                 best_loss = last_loss
                 best_model_path = P.join(weights_folder, f"{e+1}.pt")
-            torch.save(self.model.state_dict(), P.join(weights_folder, f"{e+1}.pt"))
+            torch.save(self.model.state_dict(), P.join(weights_folder, f"{e+1:03d}.pt"))
 
         self.params["best_model_path"] = best_model_path
 
