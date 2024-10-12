@@ -26,6 +26,7 @@ params file for LightConvModel should contain the following fields:
 import argparse
 import importlib
 import json
+from datetime import datetime
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Run the distillation training.')
@@ -44,6 +45,10 @@ def main():
     module_name, class_name = args.model_class.rsplit('.', 1)
     module = importlib.import_module(module_name)
     ModelClass = getattr(module, class_name)
+
+    # Add a name to the model if it is not provided
+    if params.get("name", None) is None:
+        params["name"] = class_name + "_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
     # Initialize the model
     model = ModelClass(**params)
