@@ -61,7 +61,7 @@ class FLORESEvaluator(BaseEvaluator):
                 if lang_from == lang_to:
                     continue
                 print(f"{lang_from} -> {lang_to}", flush=True)
-                acc = self._accuracy_eval(embs[i], embs[self.languages_from.index(lang_to)], self.use_gpu)
+                acc = self._accuracy_eval(embs[i], embs[self.languages_from.index(lang_to)])
                 accuracies[lang_from][lang_to] = acc
 
         return accuracies

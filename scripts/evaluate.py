@@ -19,7 +19,7 @@ def load_model(model_class, model_path=None):
 
 def run_evaluation(model, bucc_params, flores_params):
 
-    evaluators = [BUCCEvaluator(**bucc_params), FLORESEvaluator(**flores_params)]
+    evaluators = [FLORESEvaluator(**flores_params), BUCCEvaluator(**bucc_params)]
 
     results = {}
     for evaluator in evaluators:
