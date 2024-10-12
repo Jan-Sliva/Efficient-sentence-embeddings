@@ -84,7 +84,7 @@ class BUCCEvaluator(BaseEvaluator):
         x_file_id, x_file_sent = self._extract_ids_and_sentences(x_file)
         y_file_id, y_file_sent = self._extract_ids_and_sentences(y_file)
 
-        mine_bitext(x, y, x_file_id, y_file_id, output_file, self.use_gpu)
+        mine_bitext(x, y, x_file_id, y_file_id, output_file, use_gpu=self.use_gpu)
 
         vystup = bucc_eval(output_file, gold_file, x_file_sent, y_file_sent, x_file_id, y_file_id, predict_file)
 

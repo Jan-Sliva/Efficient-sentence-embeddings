@@ -23,8 +23,8 @@ class FLORESEvaluator(BaseEvaluator):
         self.verbose = params.get("verbose", False)
 
     def evaluate(self, retrieval_model): 
-        embs, times = self._extract_embeddings(self.input_folder, retrieval_model)
-        accuracies = self._calculate_accuracies(embs, self.use_gpu)
+        embs, times = self._extract_embeddings(retrieval_model)
+        accuracies = self._calculate_accuracies(embs)
 
         results = {}
         for lang, time in zip(self.languages_from, times):
