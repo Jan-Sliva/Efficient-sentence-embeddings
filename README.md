@@ -66,9 +66,9 @@ FLORES+ data should be saved in the following folder structure:
 ### Train the model
 
 ```bash
-python architectures/init_and_train_model.py --data_path <path_to_data_folder> --save_path <path_to_save_folder>  --emb_path <path_to_file_with_labse_emb_matrix>
+python scripts/train.py --params_file <path_to_params_file> --model_class architectures.light_convolution.LightConvModel
 ```
-Training data should be saved in `<path_to_data_folder>`.
+Model parameters should be saved in `<path_to_params_file>` in json format. See `scripts/train.py` for more details.
 
 See tensorboard logs:
 ```bash
@@ -77,20 +77,21 @@ tensorboard --logdir <path_to_save_folder>/tb
 The weights of the model after each epoch will be saved in `<path_to_save_folder>/save/model-<epoch>.pt`.
 
 ### Evaluate the model
-Evaluate the model on BUCC2018 and FLORES+ datasets. The results will be saved in `<path_to_eval_folder>`.
+Evaluate the model on BUCC2018 and FLORES+ datasets. The results will be saved in `<path_to_output_file>`. For more details see `scripts/evaluate.py`.
 ```bash
-python evaluation/evaluate.py --model light_convolution --model_path <path_to_model_weights> --BUCC_folder <path_to_BUCC_data> --FLORES_folder <path_to_FLORES_data> --eval_folder <path_to_eval_folder>
+python scripts/evaluate.py --params_file <path_to_params_file> --model_class architectures.light_convolution.LightConvModel --model_path <path_to_model_folder> --output_file <path_to_output_file>
 ```
 Now evaluate labse model as baseline:
 ```bash
-python evaluation/evaluate.py --model labse --BUCC_folder <path_to_BUCC_data> --FLORES_folder <path_to_FLORES_data> --eval_folder <path_to_eval_folder>
+python scripts/evaluate.py --params_file <path_to_params_file> --model_class architectures.baseline.labse.LabseModel --model_path <path_to_model_folder> --output_file <path_to_output_file>
 ```
-And now evaluate the other baseline, which averages word embeddings:
+And now evaluate the other baseline, which averages input embeddings of labse:
 ```bash
-python evaluation/evaluate.py --model word_emb --BUCC_folder <path_to_BUCC_data> --FLORES_folder <path_to_FLORES_data> --eval_folder <path_to_eval_folder>
+python scripts/evaluate.py --params_file <path_to_params_file> --model_class architectures.baseline.input_emb.InputEmbAverageModel --model_path <path_to_model_folder> --output_file <path_to_output_file>
 ```
 
 ### Inference
+Generate embeddings using a trained model. For more details see `scripts/predict.py`.
 ```bash
-python evaluation/predict.py --model_path <path_to_model_weights> --input_file <path_to_input_file> --output_file <path_to_output_file> --emb_path <path_to_file_with_word_emb_matrix>
+python scripts/predict.py --model_class <path_to_model_class> --model_path <path_to_model_folder> --input_file <path_to_input_file> --output_file <path_to_output_file>
 ```

@@ -1,3 +1,17 @@
+"""
+Generate embeddings using a trained model.
+
+Usage:
+python scripts/predict.py --model_class <path_to_model_class> --model_path <path_to_model_folder> --input_file <path_to_input_file> --output_file <path_to_output_file>
+
+--model_class is the full path to the model class, for example:
+    architectures.light_convolution.LightConvModel
+    architectures.baseline.labse.LabseModel
+    architectures.baseline.input_emb.InputEmbAverageModel
+--model_path is the path to the folder containing model weights and parameters, saved by train.py (for baselines leave empty)
+--input_file is the path to the input text file containing sentences
+--output_file is the path to save the output embeddings
+"""
 import argparse
 import importlib
 import json

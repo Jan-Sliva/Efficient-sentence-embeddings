@@ -1,3 +1,31 @@
+"""
+Evaluate the model on BUCC and FLORES datasets.
+
+Usage:
+python scripts/evaluate.py --model_class <path_to_model_class> --model_path <path_to_model_folder> --params_file <path_to_params_file> --output_file <path_to_output_file>
+
+--model_class can be for example 
+    architectures.light_convolution.LightConvModel
+    architectures.baseline.labse.LabseModel
+    architectures.baseline.input_emb.InputEmbAverageModel
+--model_path is the path to the folder containing model weights and parameters, saved by train.py (for baselines leave empty)
+--params_file is the path to the json file containing evaluation parameters
+    params file should contain the following fields:
+        BUCC:
+            input_folder: str, path to the folder containing BUCC data
+            output_folder: str, path to the folder to save intermediate results (required)
+            batch_size: int, batch size for evaluation
+            use_gpu: bool, whether to use GPU for evaluation
+            verbose: bool, whether to print evaluation progress
+            save_emb: bool, whether to save embeddings to the output folder
+            save_pairs: bool, whether to save sentence pairs to the output folder
+        FLORES:
+            input_folder: str, path to the folder containing FLORES data
+            batch_size: int, batch size for evaluation
+            use_gpu: bool, whether to use GPU for evaluation
+            verbose: bool, whether to print evaluation progress
+--output_file is the path to the output csv file, which will contain model parameters and evaluation results
+"""
 import argparse
 import csv
 import os

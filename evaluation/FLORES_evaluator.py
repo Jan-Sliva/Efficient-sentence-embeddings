@@ -1,3 +1,6 @@
+"""
+This file contains the FLORESEvaluator class for evaluating the model on the FLORES+ dataset.
+"""
 import numpy as np
 import os
 import time

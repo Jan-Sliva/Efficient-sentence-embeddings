@@ -5,23 +5,24 @@ Usage:
 python train.py --model_class <path_to_model_class> --params_file <path_to_params_json>
 
 params file for LightConvModel should contain the following fields:
-    paths:
+        - name: str, name of the model, optional
+        
         - emb_path: str, path to the embeddings file
         - data_folder: str, path to the folder containing training data
         - save_folder: str, path to save model checkpoints and parameters
         - tb_folder: str, path to save TensorBoard logs
-    architecture:
+    
         - layers: int, number of encoder layers
         - kernel_sizes: List[int], list of kernel sizes for each layer
         - conv_type: str, type of convolution ('lightweight' or 'dynamic')
         - weight_softmax: bool, whether to use softmax on weights
-    training:
+    
         - val_sentences: int, number of sentences to use for validation
         - lr: float, learning rate for the optimizer
         - batch_size: int, batch size for training
         - epochs: int, number of training epochs
         - percentage: float, percentage of training data to use in each epoch
-        - report_each: int, number of epochs between each validationreport
+        - report_each: int, number of epochs between each validation report
 """
 import argparse
 import importlib
