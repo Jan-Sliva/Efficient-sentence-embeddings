@@ -93,5 +93,5 @@ python scripts/evaluate.py --params_file <path_to_params_file> --model_class arc
 ### Inference
 Generate embeddings using a trained model. For more details see `scripts/predict.py`.
 ```bash
-python scripts/predict.py --model_class <path_to_model_class> --model_path <path_to_model_folder> --input_file <path_to_input_file> --output_file <path_to_output_file>
+python scripts/predict.py --model_class <path_to_model_class> --model_path <path_to_model_folder> --input_file <path_to_input_file> --output_file <path_to_output_file> --batch_size <batch_size>
 ```

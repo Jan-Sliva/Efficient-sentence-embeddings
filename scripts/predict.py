@@ -2,7 +2,7 @@
 Generate embeddings using a trained model.
 
 Usage:
-python scripts/predict.py --model_class <path_to_model_class> --model_path <path_to_model_folder> --input_file <path_to_input_file> --output_file <path_to_output_file>
+python scripts/predict.py --model_class <path_to_model_class> --model_path <path_to_model_folder> --input_file <path_to_input_file> --output_file <path_to_output_file> --batch_size <batch_size>
 
 --model_class is the full path to the model class, for example:
     architectures.light_convolution.LightConvModel
@@ -11,6 +11,7 @@ python scripts/predict.py --model_class <path_to_model_class> --model_path <path
 --model_path is the path to the folder containing model weights and parameters, saved by train.py (for baselines leave empty)
 --input_file is the path to the input text file containing sentences
 --output_file is the path to save the output embeddings
+--batch_size is the batch size for prediction
 """
 import argparse
 import importlib

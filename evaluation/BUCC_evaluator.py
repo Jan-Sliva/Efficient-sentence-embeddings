@@ -1,3 +1,6 @@
+"""
+This file contains the BUCCEvaluator class for evaluating the model on the BUCC2018 dataset.
+"""
 import numpy as np
 import os
 import time
