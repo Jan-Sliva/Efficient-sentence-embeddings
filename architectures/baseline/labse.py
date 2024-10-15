@@ -18,6 +18,15 @@ class Labse(BaseRetrievalModel):
 
     def predict(self, sentences, batch_size, verbose=False):
         return self.model.encode(sentences, batch_size=batch_size, show_progress_bar=verbose)
+    
+    def load_weights(self):
+        pass
+
+    def train(self):
+        pass
+
+    def inference(self, sentences, batch_size, verbose=False):
+        return self.predict(sentences, batch_size, verbose)
 
     
 if __name__ == "__main__":

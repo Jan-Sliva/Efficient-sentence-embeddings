@@ -44,6 +44,14 @@ class InputEmbAverageModel(BaseRetrievalModel):
 
         return fast_emb.cpu().detach().numpy()
     
+    def load_weights(self):
+        pass
+
+    def train(self):
+        pass
+
+    def inference(self, sentences, batch_size, verbose=False):
+        return self.predict(sentences, batch_size, verbose)
 
     
 if __name__ == "__main__":
