@@ -102,6 +102,8 @@ def main():
 
     # Initialize and load the model
     model, model_params = load_model(model_class, args.model_path)
+    if model_params.get("name", None) == None:
+        model_params["name"] = class_name
 
     # Run evaluations
     results = run_evaluation(model, eval_params["BUCC"], eval_params["FLORES"])
