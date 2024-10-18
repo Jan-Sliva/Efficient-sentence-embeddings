@@ -14,6 +14,7 @@ from argparse import Namespace
 from transformers import BertTokenizerFast
 from math import ceil
 import json
+import numpy as np
 
 class LightConvModel(BaseRetrievalModel):
     def __init__(self, **params):
@@ -70,8 +71,8 @@ class LightConvModel(BaseRetrievalModel):
             last_loss = self._train_one_epoch(train_loader, val_loader, optimizer, e, writer)
             if last_loss < best_loss:
                 best_loss = last_loss
-                best_model_path = P.join(weights_folder, f"{e+1}.pt")
-            torch.save(self.model.state_dict(), P.join(weights_folder, f"{e+1:03d}.pt"))
+                best_model_path = P.join(weights_folder, f"{e+1:03d}.pt")
+            torch.save(self.model.state_dict(), best_model_path)
 
         self.params["best_model_path"] = best_model_path
 
@@ -157,20 +158,28 @@ class LightConvModel(BaseRetrievalModel):
 
         return train_loader, val_loader
 
+    @torch.inference_mode()
     def predict(self, sentences, batch_size, verbose=False):
         if self.tokenizer is None:
             self.tokenizer = BertTokenizerFast.from_pretrained("setu4993/LaBSE")
 
-        inputs = self.tokenizer(sentences, return_tensors="pt", padding=True)
-
-        embs = torch.zeros((len(sentences), self.model.embed_tokens.weight.shape[1])).to(self.device)
-        inputs["input_ids"] = inputs["input_ids"].to(self.device)
+        all_embs = []
+        length_sorted_idx = np.argsort([-len(sen) for sen in sentences])
+        sentences_sorted = [sentences[idx] for idx in length_sorted_idx]
 
         for s in range(0, len(sentences), batch_size):
             if verbose:
                 print(f"batch no. {1 + s//batch_size}/{ceil(len(sentences)/batch_size)}")
             e = min(s+batch_size, len(sentences))
-            with torch.no_grad():
-                embs[s:e] = self.inference(inputs["input_ids"][s:e])
 
-        return embs.cpu().detach().numpy()
+            inputs = self.tokenizer(sentences_sorted[s:e], return_tensors="pt", padding=True)
+            inputs["input_ids"] = inputs["input_ids"].to(self.device)
+
+            with torch.no_grad():
+                emb = self.inference(inputs["input_ids"])
+
+            emb = emb.cpu().detach().numpy()
+            all_embs.extend(emb)
+
+        all_embs = [all_embs[idx] for idx in np.argsort(length_sorted_idx)]
+        return np.array(all_embs)

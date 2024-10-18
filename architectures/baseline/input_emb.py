@@ -5,6 +5,7 @@ import torch
 from transformers import BertModel, BertTokenizerFast
 from math import ceil
 from architectures.base_retrieval_model import BaseRetrievalModel
+import numpy as np
 
 class InputEmbAverageModel(BaseRetrievalModel):
 
@@ -22,27 +23,32 @@ class InputEmbAverageModel(BaseRetrievalModel):
             self.empty_emb = self.model.embeddings.word_embeddings(inputs["input_ids"]).sum(axis=1)
         self.empty_tokens = inputs["attention_mask"].sum(axis=1)
 
+    @torch.inference_mode()
     def predict(self, sentences, batch_size, verbose = False):
-        inputs = self.tokenizer(sentences, return_tensors="pt", padding=True)
 
-        emb_dim = self.model.embeddings.word_embeddings.embedding_dim
-
-        fast_emb = torch.zeros((len(sentences), emb_dim)).to(self.device)
-        inputs["input_ids"] = inputs["input_ids"].to(self.device)
-        inputs["attention_mask"] = inputs["attention_mask"].to(self.device)
+        all_embs = []
+        length_sorted_idx = np.argsort([-len(sen) for sen in sentences])
+        sentences_sorted = [sentences[idx] for idx in length_sorted_idx]
 
         for s in range(0, len(sentences), batch_size):
-            if (verbose): print(f"batch no. {1 + s//batch_size}/{ceil(len(sentences)/batch_size)}")
             e = min(s+batch_size, len(sentences))
+
+            inputs = self.tokenizer(sentences_sorted[s:e], return_tensors="pt", padding=True)
+            inputs["input_ids"] = inputs["input_ids"].to(self.device)
+            inputs["attention_mask"] = inputs["attention_mask"].to(self.device)
+
             with torch.no_grad():
-                fast_emb_sent = self.model.embeddings.word_embeddings(inputs["input_ids"][s:e])
+                fast_emb_sent = self.model.embeddings.word_embeddings(inputs["input_ids"])
 
-            fast_emb[s:e] = (fast_emb_sent * inputs["attention_mask"][s:e][:, :, None]).sum(axis=1) - self.empty_emb
-            fast_emb[s:e] = torch.div(fast_emb[s:e], (inputs["attention_mask"][s:e].sum(axis=1) - self.empty_tokens)[:, None])
+            ret = (fast_emb_sent * inputs["attention_mask"][:, :, None]).sum(axis=1) - self.empty_emb
+            ret = torch.div(ret, (inputs["attention_mask"].sum(axis=1) - self.empty_tokens)[:, None])
+            ret = ret.cpu().detach().numpy()
 
-            del fast_emb_sent
+            all_embs.extend(ret)
 
-        return fast_emb.cpu().detach().numpy()
+        all_embs = [all_embs[idx] for idx in np.argsort(length_sorted_idx)]
+
+        return np.array(all_embs)
     
     def load_weights(self):
         pass

@@ -16,6 +16,7 @@ class Labse(BaseRetrievalModel):
         else:
             self.model.cuda(self.device)
 
+    @torch.inference_mode()
     def predict(self, sentences, batch_size, verbose=False):
         return self.model.encode(sentences, batch_size=batch_size, show_progress_bar=verbose)
     
