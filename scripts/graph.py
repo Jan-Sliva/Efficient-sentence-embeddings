@@ -3,6 +3,7 @@ import json
 import pandas as pd
 import matplotlib.pyplot as plt
 import os.path as P
+from adjustText import adjust_text
 
 def load_data(csv_path):
     return pd.read_csv(csv_path)
@@ -34,10 +35,14 @@ def create_graph(data, config, output_path):
         y = combine_values(y_config['columns'], y_config['function'])
         labels = data[graph['label']]
         
-        plt.scatter(x, y, marker='+', s=200, color='blue')  # Changed marker to 'x' and increased size
+        plt.scatter(x, y, marker='.', s=200, color='blue')  # Changed marker to 'x' and increased size
         
+        texts = []
         for i, label in enumerate(labels):
-            plt.annotate(label, (x[i], y[i]), xytext=(5, 5), textcoords='offset points', fontsize=14)  # Half the size of other text
+            texts.append(plt.text(x[i], y[i], label, fontsize=14))
+        
+        # Adjust text positions to minimize overlaps
+        adjust_text(texts, x=x, y=y)
         
         plt.xlabel(graph['x_axis']['label'], fontsize=24)
         plt.ylabel(graph['y_axis']['label'], fontsize=24)
