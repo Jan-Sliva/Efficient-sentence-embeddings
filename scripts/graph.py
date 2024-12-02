@@ -31,9 +31,9 @@ def create_graph(data, config, output_path):
             else:
                 raise ValueError(f"Unsupported function: {function}")
         
-        x = combine_values(x_config['columns'], x_config['function'])
-        y = combine_values(y_config['columns'], y_config['function'])
-        labels = data[graph['label']]
+        x = list(combine_values(x_config['columns'], x_config['function']))
+        y = list(combine_values(y_config['columns'], y_config['function']))
+        labels = list(data[graph['label']])
         
         plt.scatter(x, y, marker='.', s=200, color='blue')  # Changed marker to 'x' and increased size
         
@@ -42,7 +42,7 @@ def create_graph(data, config, output_path):
             texts.append(plt.text(x[i], y[i], label, fontsize=14))
         
         # Adjust text positions to minimize overlaps
-        adjust_text(texts, x=x, y=y)
+        adjust_text(texts, x=x, y=y, arrowprops=dict(arrowstyle='->', color='gray', alpha=0.6))
         
         plt.xlabel(graph['x_axis']['label'], fontsize=24)
         plt.ylabel(graph['y_axis']['label'], fontsize=24)
@@ -72,6 +72,8 @@ def main():
 
     data = load_data(args.csv_path)
     config = load_config(args.json_path)
+
+    data = data.query('hide != True')
 
     create_graph(data, config, args.output_path)
 
