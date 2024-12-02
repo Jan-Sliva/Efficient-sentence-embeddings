@@ -40,7 +40,13 @@ class LightConvModel(BaseRetrievalModel):
         args.max_source_positions = 1024
         base_architecture(args)
         return args
-        
+    
+    def _get_outputs(self, inputs, attention_mask):
+        outputs = self.model(inputs)["encoder_out"][0]
+        outputs = (attention_mask * outputs).sum(dim=1) / attention_mask.sum(dim=1)
+        outputs = torch.nn.functional.normalize(outputs, p=2, dim=1)
+        return outputs
+
     def train(self):
         data_folder = self.params["data_folder"]
         save_folder = P.join(self.params["save_folder"], self.params["name"])
@@ -84,22 +90,13 @@ class LightConvModel(BaseRetrievalModel):
         self.model.load_state_dict(torch.load(weights_path))
         self.model.eval()
 
-    def inference(self, input_tensor):
-        with torch.no_grad():
-            output = self.model(input_tensor)["encoder_out"][0]
-            output = output.mean(dim=0)
-            output = torch.nn.functional.normalize(output, p=2, dim=1)
-        return output
-
     def _train_one_epoch(self, train_loader, val_loader, optimizer, epoch_index, tb_writer):
         running_loss = 0.
         last_loss = 0.
 
         for i, (inputs, labels) in enumerate(train_loader):
             optimizer.zero_grad()
-            outputs = self.model(inputs)["encoder_out"][0]
-            outputs = outputs.mean(dim=0)
-            outputs = torch.nn.functional.normalize(outputs, p=2, dim=1)
+            outputs = self._get_outputs(inputs[0], inputs[1])
 
             loss = self.loss_fn(outputs, labels)
             loss.backward()
@@ -128,9 +125,7 @@ class LightConvModel(BaseRetrievalModel):
         total_loss = 0.0
         with torch.no_grad():
             for inputs, labels in val_loader:
-                outputs = self.model(inputs)["encoder_out"][0]
-                outputs = outputs.mean(dim=0)
-                outputs = torch.nn.functional.normalize(outputs, p=2, dim=1)
+                outputs = self._get_outputs(inputs[0], inputs[1])
                 loss = self.loss_fn(outputs, labels)
                 total_loss += loss.item()
 
@@ -141,7 +136,10 @@ class LightConvModel(BaseRetrievalModel):
     def _get_data_loaders(self, data_folder, batch_size, val_sentences):
         def collate_fn_padd(batch):
             input = [torch.Tensor(t[0]).to("cuda", dtype=torch.int32) for t in batch]
+            attention_mask = [torch.ones(len(t[0])).to("cuda", dtype=torch.int32) for t in batch]
             input = torch.nn.utils.rnn.pad_sequence(input, padding_value=0, batch_first=True)
+            attention_mask = torch.nn.utils.rnn.pad_sequence(attention_mask, padding_value=0, batch_first=True)
+            input = (input, attention_mask)
 
             output = [torch.Tensor(t[1]).to("cuda", dtype=torch.float32) for t in batch]
             output = torch.stack(output, dim=0)
@@ -174,9 +172,10 @@ class LightConvModel(BaseRetrievalModel):
 
             inputs = self.tokenizer(sentences_sorted[s:e], return_tensors="pt", padding=True)
             inputs["input_ids"] = inputs["input_ids"].to(self.device)
+            inputs["attention_mask"] = inputs["attention_mask"].to(self.device)
 
             with torch.no_grad():
-                emb = self.inference(inputs["input_ids"])
+                emb = self._get_outputs(inputs["input_ids"], inputs["attention_mask"])
 
             emb = emb.cpu().detach().numpy()
             all_embs.extend(emb)
