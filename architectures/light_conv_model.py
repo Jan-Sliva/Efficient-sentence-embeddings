@@ -43,7 +43,7 @@ class LightConvModel(BaseRetrievalModel):
     
     def _get_outputs(self, inputs, attention_mask):
         outputs = self.model(inputs)["encoder_out"][0]
-        outputs = (attention_mask * outputs).sum(dim=1) / attention_mask.sum(dim=1)
+        outputs = (attention_mask * outputs).sum(dim=0) / attention_mask.sum(dim=0)
         outputs = torch.nn.functional.normalize(outputs, p=2, dim=1)
         return outputs
 
@@ -139,6 +139,7 @@ class LightConvModel(BaseRetrievalModel):
             attention_mask = [torch.ones(len(t[0])).to("cuda", dtype=torch.int32) for t in batch]
             input = torch.nn.utils.rnn.pad_sequence(input, padding_value=0, batch_first=True)
             attention_mask = torch.nn.utils.rnn.pad_sequence(attention_mask, padding_value=0, batch_first=True)
+            attention_mask = attention_mask.transpose(0, 1)[:, :, None]
             input = (input, attention_mask)
 
             output = [torch.Tensor(t[1]).to("cuda", dtype=torch.float32) for t in batch]
@@ -172,7 +173,7 @@ class LightConvModel(BaseRetrievalModel):
 
             inputs = self.tokenizer(sentences_sorted[s:e], return_tensors="pt", padding=True)
             inputs["input_ids"] = inputs["input_ids"].to(self.device)
-            inputs["attention_mask"] = inputs["attention_mask"].to(self.device)
+            inputs["attention_mask"] = inputs["attention_mask"].to(self.device).transpose(0, 1)[:, :, None]
 
             with torch.no_grad():
                 emb = self._get_outputs(inputs["input_ids"], inputs["attention_mask"])
