@@ -3,6 +3,7 @@ import json
 import pandas as pd
 import matplotlib.pyplot as plt
 import os.path as P
+import numpy as np
 from adjustText import adjust_text
 
 def load_data(csv_path):
@@ -14,10 +15,10 @@ def load_config(json_path):
 
 def create_graph(data, config, output_path):
     # Increase the default font size
-    plt.rcParams.update({'font.size': 24})  # Default font size is usually 12, so this doubles it
+    plt.rcParams.update({'font.size': 24})
     
     for graph in config:
-        plt.figure(figsize=(12, 8))
+        plt.figure(figsize=(14, 8))  # Increased width to accommodate legend
         
         x_config = graph['x_axis']
         y_config = graph['y_axis']
@@ -35,30 +36,45 @@ def create_graph(data, config, output_path):
         y = list(combine_values(y_config['columns'], y_config['function']))
         labels = list(data[graph['label']])
         
-        plt.scatter(x, y, marker='.', s=200, color='blue')  # Changed marker to 'x' and increased size
+        # Create a color map for unique labels
+        unique_labels = list(set(labels))
+        colors = plt.cm.rainbow(np.linspace(0, 1, len(unique_labels)))
+        label_to_color = dict(zip(unique_labels, colors))
         
-        texts = []
-        for i, label in enumerate(labels):
-            texts.append(plt.text(x[i], y[i], label, fontsize=14))
-        
-        # Adjust text positions to minimize overlaps
-        adjust_text(texts, x=x, y=y, arrowprops=dict(arrowstyle='->', color='gray', alpha=0.6))
+        # Plot points with different colors
+        for label in unique_labels:
+            mask = [l == label for l in labels]
+            x_points = [x[i] for i, m in enumerate(mask) if m]
+            y_points = [y[i] for i, m in enumerate(mask) if m]
+            plt.scatter(x_points, y_points, 
+                       marker='.', 
+                       s=200, 
+                       color=label_to_color[label],
+                       label=label)
         
         plt.xlabel(graph['x_axis']['label'], fontsize=24)
         plt.ylabel(graph['y_axis']['label'], fontsize=24)
         plt.title(graph['title'], fontsize=28)
         plt.grid(True)
         
+        # Add legend outside of the plot
+        plt.legend(bbox_to_anchor=(1.05, 1), 
+                  loc='upper left', 
+                  fontsize=12,
+                  borderaxespad=0.)
+        
         # Set both axes to start at zero
         plt.xlim(left=0)
         plt.ylim(bottom=0)
         
-        plt.tight_layout()
+        plt.tight_layout()  # Adjust layout to prevent legend cutoff
         
         # Increase font size for tick labels
         plt.tick_params(axis='both', which='major', labelsize=20)
         
-        plt.savefig(P.join(output_path, f"{graph['save_name']}.png"), dpi=300)  # Increased DPI for better quality
+        plt.savefig(P.join(output_path, f"{graph['save_name']}.png"), 
+                    dpi=300,
+                    bbox_inches='tight')  # Added bbox_inches to prevent legend cutoff
     
     # Reset the font size to default after creating all graphs
     plt.rcParams.update({'font.size': plt.rcParamsDefault['font.size']})
