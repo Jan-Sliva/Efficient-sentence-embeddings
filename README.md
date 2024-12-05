@@ -11,6 +11,7 @@ conda activate ESE
 pip install transformers==4.44.2 sentence-transformers==3.1.0
 conda install -c pytorch -c nvidia faiss-gpu=1.8.0
 pip install git+https://github.com/One-sixth/fairseq.git
+pip install tensorboard
 ```
 Also you need to set PYTHONPATH to include path to this folder.
 ```bash
