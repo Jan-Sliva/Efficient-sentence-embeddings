@@ -47,12 +47,16 @@ def main():
     module = importlib.import_module(module_name)
     ModelClass = getattr(module, class_name)
 
+
     # Add a name to the model if it is not provided
     if params.get("name", None) is None:
         params["name"] = class_name + "_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
     # Initialize the model
     model = ModelClass(**params)
+
+    if params.get("weights_path", None) is not None:
+        model.load_weights(params["weights_path"])
 
     # Train the model
     model.train()
