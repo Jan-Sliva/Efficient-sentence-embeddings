@@ -32,6 +32,7 @@ import os
 import json
 from evaluation.BUCC_evaluator import BUCCEvaluator
 from evaluation.FLORES_evaluator import FLORESEvaluator
+from evaluation.TATOEBA_evaluator import TATOEBAEvaluator
 import json
 import os.path as P
 
@@ -45,9 +46,9 @@ def load_model(model_class, model_path=None):
     model.load_weights()
     return model, params
 
-def run_evaluation(model, bucc_params, flores_params):
+def run_evaluation(model, bucc_params, flores_params, tatoeba_params):
 
-    evaluators = [FLORESEvaluator(**flores_params), BUCCEvaluator(**bucc_params)]
+    evaluators = [FLORESEvaluator(**flores_params), BUCCEvaluator(**bucc_params), TATOEBAEvaluator(**tatoeba_params)]
 
     results = {}
     for evaluator in evaluators:
@@ -106,7 +107,7 @@ def main():
         model_params["name"] = class_name
 
     # Run evaluations
-    results = run_evaluation(model, eval_params["BUCC"], eval_params["FLORES"])
+    results = run_evaluation(model, eval_params["BUCC"], eval_params["FLORES"], eval_params["TATOEBA"])
 
     # Write results to CSV
     write_results_to_csv({**model_params, **results}, args.output_file)
