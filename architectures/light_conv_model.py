@@ -84,6 +84,8 @@ class LightConvModel(BaseRetrievalModel):
 
         json.dump(self.params, open(P.join(save_folder, "params.json"), "w"))
 
+        torch.save(optimizer.state_dict(), P.join(save_folder, "optimizer.pt"))
+
     def load_weights(self, weights_path = None):
         if weights_path is None:
             weights_path = self.params["best_model_path"]
