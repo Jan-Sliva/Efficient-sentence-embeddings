@@ -35,6 +35,7 @@ from evaluation.FLORES_evaluator import FLORESEvaluator
 from evaluation.TATOEBA_evaluator import TATOEBAEvaluator
 import json
 import os.path as P
+from datetime import datetime
 
 def load_model(model_class, model_path=None):
     if (model_path != None): 
@@ -48,7 +49,7 @@ def load_model(model_class, model_path=None):
 
 def run_evaluation(model, bucc_params, flores_params, tatoeba_params):
 
-    evaluators = [FLORESEvaluator(**flores_params), BUCCEvaluator(**bucc_params), TATOEBAEvaluator(**tatoeba_params)]
+    evaluators = [FLORESEvaluator(**flores_params), TATOEBAEvaluator(**tatoeba_params), BUCCEvaluator(**bucc_params)]
 
     results = {}
     for evaluator in evaluators:
@@ -59,28 +60,34 @@ def run_evaluation(model, bucc_params, flores_params, tatoeba_params):
     return results
 
 def write_results_to_csv(data, output_file):
-    # Get existing fieldnames if file exists, otherwise use all keys
+    # Load existing CSV data if file exists
     if os.path.isfile(output_file):
+        existing_data = []
         with open(output_file, 'r') as csvfile:
-            reader = csv.reader(csvfile)
-            existing_fieldnames = next(reader, [])
+            reader = csv.DictReader(csvfile)
+            fieldnames = reader.fieldnames
+            for row in reader:
+                existing_data.append(row)
     else:
-        existing_fieldnames = []
+        existing_data = []
+        fieldnames = []
 
-    # Add new fieldnames from all_data that are not in existing_fieldnames
-    new_fieldnames = [field for field in data.keys() if field not in existing_fieldnames]
-    fieldnames = existing_fieldnames + new_fieldnames
+    # Add new fieldnames from data that are not in existing fieldnames
+    new_fieldnames = [field for field in data.keys() if field not in fieldnames]
+    fieldnames = fieldnames + new_fieldnames
 
-    # Open file in append mode if it exists, otherwise write mode
-    mode = 'a' if os.path.isfile(output_file) else 'w'
-    
-    with open(output_file, mode, newline='') as csvfile:
+    # Write all data back to file
+    with open(output_file, 'w', newline='') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
         
-        if mode == 'w':
-            writer.writeheader()
-        
-        # Fill in blank values for new columns
+        # Write existing rows
+        for row in existing_data:
+            # Fill in blank values for new columns
+            row_data = {field: row.get(field, '') for field in fieldnames}
+            writer.writerow(row_data)
+            
+        # Write new row
         row_data = {field: data.get(field, '') for field in fieldnames}
         writer.writerow(row_data)
 
@@ -108,6 +115,7 @@ def main():
 
     # Run evaluations
     results = run_evaluation(model, eval_params["BUCC"], eval_params["FLORES"], eval_params["TATOEBA"])
+    results["date"] = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
     # Write results to CSV
     write_results_to_csv({**model_params, **results}, args.output_file)
