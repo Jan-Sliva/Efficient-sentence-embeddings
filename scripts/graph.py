@@ -18,6 +18,16 @@ def create_graph(data, config, output_path):
     plt.rcParams.update({'font.size': 24})
     
     for graph in config:
+
+        skip = False
+        for col in graph['y_axis']['columns'] + graph['x_axis']['columns'] + [graph['label']]:
+            if col not in data.columns:
+                skip = True
+                break
+        
+        if skip:
+            continue
+
         plt.figure(figsize=(14, 8))  # Increased width to accommodate legend
         
         x_config = graph['x_axis']
@@ -37,7 +47,7 @@ def create_graph(data, config, output_path):
         labels = list(data[graph['label']])
         
         # Create a color map for unique labels
-        unique_labels = list(set(labels))
+        unique_labels = sorted(list(set(labels)))
         colors = plt.cm.rainbow(np.linspace(0, 1, len(unique_labels)))
         label_to_color = dict(zip(unique_labels, colors))
         
