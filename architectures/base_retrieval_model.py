@@ -46,19 +46,6 @@ class BaseRetrievalModel(ABC):
         pass
 
     @abstractmethod
-    def inference(self, input_tensor: torch.Tensor) -> torch.Tensor:
-        """
-        Perform inference using the trained model.
-
-        Args:
-            input_tensor (torch.Tensor): Input tensor for inference.
-
-        Returns:
-            torch.Tensor: Output tensor from the model.
-        """
-        pass
-
-    @abstractmethod
     def predict(self, sentences: list, batch_size: int, verbose: bool = False) -> np.ndarray:
         """
         Generate embeddings for a list of sentences.

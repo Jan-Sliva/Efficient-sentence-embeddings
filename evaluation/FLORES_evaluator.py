@@ -1,3 +1,6 @@
+"""
+This file contains the FLORESEvaluator class for evaluating the model on the FLORES+ dataset.
+"""
 import numpy as np
 import os
 import time
@@ -23,8 +26,8 @@ class FLORESEvaluator(BaseEvaluator):
         self.verbose = params.get("verbose", False)
 
     def evaluate(self, retrieval_model): 
-        embs, times = self._extract_embeddings(self.input_folder, retrieval_model)
-        accuracies = self._calculate_accuracies(embs, self.use_gpu)
+        embs, times = self._extract_embeddings(retrieval_model)
+        accuracies = self._calculate_accuracies(embs)
 
         results = {}
         for lang, time in zip(self.languages_from, times):
@@ -61,7 +64,7 @@ class FLORESEvaluator(BaseEvaluator):
                 if lang_from == lang_to:
                     continue
                 print(f"{lang_from} -> {lang_to}", flush=True)
-                acc = self._accuracy_eval(embs[i], embs[self.languages_from.index(lang_to)], self.use_gpu)
+                acc = self._accuracy_eval(embs[i], embs[self.languages_from.index(lang_to)])
                 accuracies[lang_from][lang_to] = acc
 
         return accuracies

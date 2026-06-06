@@ -9,10 +9,13 @@ from architectures.load_data import DestillationDataset
 from architectures.utils import load_embs
 from architectures.base_retrieval_model import BaseRetrievalModel
 import os.path as P
+import os
 from argparse import Namespace
 from transformers import BertTokenizerFast
 from math import ceil
 import json
+import numpy as np
+
 class LightConvModel(BaseRetrievalModel):
     def __init__(self, **params):
         self.params = params
@@ -37,11 +40,21 @@ class LightConvModel(BaseRetrievalModel):
         args.max_source_positions = 1024
         base_architecture(args)
         return args
-        
+    
+    def _get_outputs(self, inputs, attention_mask):
+        outputs = self.model(inputs)["encoder_out"][0]
+        outputs = (attention_mask * outputs).sum(dim=0) / attention_mask.sum(dim=0)
+        outputs = torch.nn.functional.normalize(outputs, p=2, dim=1)
+        return outputs
+
     def train(self):
         data_folder = self.params["data_folder"]
-        save_folder = self.params["save_folder"]
+        save_folder = P.join(self.params["save_folder"], self.params["name"])
         tb_folder = self.params["tb_folder"]
+
+        for folder in [save_folder, tb_folder, data_folder]:
+            if not P.exists(folder):
+                os.makedirs(folder)
 
         if self.loss_fn is None:
             self.loss_fn = torch.nn.MSELoss()
@@ -55,17 +68,23 @@ class LightConvModel(BaseRetrievalModel):
         best_loss = float("inf")
         best_model_path = None
 
+        weights_folder = P.join(save_folder, "weights")
+        if not P.exists(weights_folder):
+            os.makedirs(weights_folder)
+
         for e in range(self.params["epochs"]):
             print(f"Epoch {e}", flush=True)
             last_loss = self._train_one_epoch(train_loader, val_loader, optimizer, e, writer)
             if last_loss < best_loss:
                 best_loss = last_loss
-                best_model_path = P.join(save_folder, "weights", f"{e+1}.pt")
-            torch.save(self.model.state_dict(), P.join(save_folder, "weights", f"{e+1}.pt"))
+                best_model_path = P.join(weights_folder, f"{e+1:03d}.pt")
+            torch.save(self.model.state_dict(), best_model_path)
 
         self.params["best_model_path"] = best_model_path
 
         json.dump(self.params, open(P.join(save_folder, "params.json"), "w"))
+
+        torch.save(optimizer.state_dict(), P.join(save_folder, "optimizer.pt"))
 
     def load_weights(self, weights_path = None):
         if weights_path is None:
@@ -73,22 +92,13 @@ class LightConvModel(BaseRetrievalModel):
         self.model.load_state_dict(torch.load(weights_path))
         self.model.eval()
 
-    def inference(self, input_tensor):
-        with torch.no_grad():
-            output = self.model(input_tensor)["encoder_out"][0]
-            output = output.mean(dim=0)
-            output = torch.nn.functional.normalize(output, p=2, dim=1)
-        return output
-
-    def _train_one_epoch(self, train_loader, val_loader, optimizer, epoch_index, tb_writer, percentage, report_each):
+    def _train_one_epoch(self, train_loader, val_loader, optimizer, epoch_index, tb_writer):
         running_loss = 0.
         last_loss = 0.
 
         for i, (inputs, labels) in enumerate(train_loader):
             optimizer.zero_grad()
-            outputs = self.model(inputs)["encoder_out"][0]
-            outputs = outputs.mean(dim=0)
-            outputs = torch.nn.functional.normalize(outputs, p=2, dim=1)
+            outputs = self._get_outputs(inputs[0], inputs[1])
 
             loss = self.loss_fn(outputs, labels)
             loss.backward()
@@ -99,13 +109,13 @@ class LightConvModel(BaseRetrievalModel):
                 last_loss = running_loss / self.params["report_each"]
                 print(f'  batch {i + 1} loss: {last_loss}', flush=True)
                 tb_x = epoch_index * len(train_loader) + i + 1
-                tb_writer.add_scalar('Loss/train', last_loss, tb_x)
                 running_loss = 0.
 
                 # Run validation after every 'report_each' training steps
                 val_loss = self._validate(val_loader)
                 print(f'  batch {i + 1} validation loss: {val_loss}', flush=True)
-                tb_writer.add_scalar('Loss/validation', val_loss, tb_x)
+
+                tb_writer.add_scalars(self.params["name"], {"train_loss": last_loss, "validation_loss": val_loss}, tb_x)
 
             if i >= self.params["percentage"] * len(train_loader):
                 break
@@ -117,9 +127,7 @@ class LightConvModel(BaseRetrievalModel):
         total_loss = 0.0
         with torch.no_grad():
             for inputs, labels in val_loader:
-                outputs = self.model(inputs)["encoder_out"][0]
-                outputs = outputs.mean(dim=0)
-                outputs = torch.nn.functional.normalize(outputs, p=2, dim=1)
+                outputs = self._get_outputs(inputs[0], inputs[1])
                 loss = self.loss_fn(outputs, labels)
                 total_loss += loss.item()
 
@@ -130,7 +138,11 @@ class LightConvModel(BaseRetrievalModel):
     def _get_data_loaders(self, data_folder, batch_size, val_sentences):
         def collate_fn_padd(batch):
             input = [torch.Tensor(t[0]).to("cuda", dtype=torch.int32) for t in batch]
+            attention_mask = [torch.ones(len(t[0])).to("cuda", dtype=torch.int32) for t in batch]
             input = torch.nn.utils.rnn.pad_sequence(input, padding_value=0, batch_first=True)
+            attention_mask = torch.nn.utils.rnn.pad_sequence(attention_mask, padding_value=0, batch_first=True)
+            attention_mask = attention_mask.transpose(0, 1)[:, :, None]
+            input = (input, attention_mask)
 
             output = [torch.Tensor(t[1]).to("cuda", dtype=torch.float32) for t in batch]
             output = torch.stack(output, dim=0)
@@ -147,20 +159,29 @@ class LightConvModel(BaseRetrievalModel):
 
         return train_loader, val_loader
 
+    @torch.inference_mode()
     def predict(self, sentences, batch_size, verbose=False):
         if self.tokenizer is None:
             self.tokenizer = BertTokenizerFast.from_pretrained("setu4993/LaBSE")
 
-        inputs = self.tokenizer(sentences, return_tensors="pt", padding=True)
-
-        embs = torch.zeros((len(sentences), self.model.embed_tokens.weight.shape[1])).to(self.device)
-        inputs["input_ids"] = inputs["input_ids"].to(self.device)
+        all_embs = []
+        length_sorted_idx = np.argsort([-len(sen) for sen in sentences])
+        sentences_sorted = [sentences[idx] for idx in length_sorted_idx]
 
         for s in range(0, len(sentences), batch_size):
             if verbose:
                 print(f"batch no. {1 + s//batch_size}/{ceil(len(sentences)/batch_size)}")
             e = min(s+batch_size, len(sentences))
-            with torch.no_grad():
-                embs[s:e] = self.inference(inputs["input_ids"][s:e])
 
-        return embs.cpu().detach().numpy()
+            inputs = self.tokenizer(sentences_sorted[s:e], return_tensors="pt", padding=True)
+            inputs["input_ids"] = inputs["input_ids"].to(self.device)
+            inputs["attention_mask"] = inputs["attention_mask"].to(self.device).transpose(0, 1)[:, :, None]
+
+            with torch.no_grad():
+                emb = self._get_outputs(inputs["input_ids"], inputs["attention_mask"])
+
+            emb = emb.cpu().detach().numpy()
+            all_embs.extend(emb)
+
+        all_embs = [all_embs[idx] for idx in np.argsort(length_sorted_idx)]
+        return np.array(all_embs)
